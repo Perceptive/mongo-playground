@@ -1,0 +1,34 @@
+{
+  "name": "mongo-playground",
+  "version": "1.0.0",
+  "description": "Helps developers run mongo queries",
+  "private": true,
+  "main": "index.js",
+  "scripts": {
+    "start": "node index"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/Perceptive/mongo-playground.git"
+  },
+  "keywords": [
+    "mongo",
+    "mongodb"
+  ],
+  "author": "Micah Henning <micah@perceptive.io>",
+  "license": "UNLICENSED",
+  "bugs": {
+    "url": "https://github.com/Perceptive/mongo-playground/issues"
+  },
+  "homepage": "https://github.com/Perceptive/mongo-playground#readme",
+  "devDependencies": {
+    "eslint": "^5.12.0",
+    "eslint-config-airbnb": "^17.1.0",
+    "eslint-plugin-import": "^2.14.0",
+    "eslint-plugin-jsx-a11y": "^6.1.2",
+    "eslint-plugin-react": "^7.12.3"
+  },
+  "dependencies": {
+    "express": "^4.16.4"
+  }
+}
