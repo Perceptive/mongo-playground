@@ -18,6 +18,8 @@ app.post('/', async (req, res) => {
     url, method, collection, data,
   } = req.body;
 
+  res.setHeader('Content-Type', 'application/json');
+
   // Connect to mongo instance
   const db = new MongoConnection(url);
 
@@ -25,7 +27,7 @@ app.post('/', async (req, res) => {
     await db.open();
   } catch (e) {
     console.error(e);
-    return res.status(500).send(e);
+    return res.status(500).json(e);
   }
 
   // Execute request
@@ -42,16 +44,18 @@ app.post('/', async (req, res) => {
 
     db.close();
 
-    return res.status(200).send(result);
+    return res.status(200).json(result);
   } catch (e) {
     console.error(e);
-    return res.status(400).send(e);
+    return res.status(400).json(e);
   }
 });
 
 // Get list of collections
 app.post('/get-collections', async (req, res) => {
   const { url } = req.body;
+
+  res.setHeader('Content-Type', 'application/json');
 
   // Connect to mongo instance
   const db = new MongoConnection(url);
@@ -60,7 +64,7 @@ app.post('/get-collections', async (req, res) => {
     await db.open();
   } catch (e) {
     console.error(e);
-    return res.status(500).send(e);
+    return res.status(500).json(e);
   }
 
   // Execute request
@@ -69,10 +73,10 @@ app.post('/get-collections', async (req, res) => {
 
     db.close();
 
-    return res.status(200).send(result);
+    return res.status(200).json(result);
   } catch (e) {
     console.error(e);
-    return res.status(400).send(e);
+    return res.status(400).json(e);
   }
 });
 
