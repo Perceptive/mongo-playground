@@ -71,6 +71,7 @@
         padding: 1rem;
         background: rgb(23, 43, 58);
         color: rgba(255, 255, 255, 0.6);
+        font-family: 'Ubuntu Mono', monospace;
         font-size: 16px;
         border: none;
       }
@@ -240,6 +241,78 @@
         });
 
         xhr.send(body);
+      });
+    
+      /**
+       * Enable tabs in textarea
+       */
+      document.querySelector('textarea').addEventListener('keydown', (event) => {
+        const keyCode = event.keyCode || event.which;
+        const textarea = event.target;
+
+        const start = textarea.selectionStart;
+        const end = textarea.selectionEnd;
+        const first = textarea.value.substr(0, start);
+        const last = textarea.value.substr(end);
+
+        // Tab key
+        if (keyCode === 9) {
+          event.preventDefault(); // don't move away from textarea
+
+          // Add spaces
+          textarea.value = `${first}  ${last}`;
+
+          // Place cursor after spaces
+          textarea.selectionStart = start + 2;
+        }
+
+        // Braces and brackets
+        if (keyCode === 219) {
+          event.preventDefault();
+
+          // Curly brace
+          if (event.shiftKey) {
+            textarea.value = `${first}{  }${last}`;
+
+            // Set cursor
+            textarea.selectionStart = start + 2;
+          // Square bracket
+          } else {
+            textarea.value = `${first}[]${last}`;
+            textarea.selectionStart = start + 1;
+          }
+        }
+
+        // Quotes
+        if (keyCode === 222) {
+          event.preventDefault();
+
+          if (event.shiftKey) textarea.value = `${first}""${last}`;
+          else textarea.value = `${first}''${last}`;
+
+          textarea.selectionStart = start + 1;
+        }
+
+        // Enter button
+        if (keyCode === 13) {
+          event.preventDefault();
+
+          // Get last character
+          const char = first.trim().substr(-1);
+
+          switch (char) {
+            case '{':
+            case '[':
+              textarea.value = `${first.trim()}\n  \n${last.trim()}`;
+              textarea.selectionStart = (start - (first.length - first.trim().length)) + 3;
+              break;
+            default:
+              textarea.value = `${first}\n${last}`;
+              textarea.selectionStart = start + 1;
+          }
+        }
+
+        textarea.selectionEnd = textarea.selectionStart;
       });
     </script>
   </body>
