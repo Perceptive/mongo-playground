@@ -3,8 +3,235 @@
   <head>
     <meta charset="utf-8">
     <title>Mongo Playground</title>
+    <link href="https://fonts.googleapis.com/css?family=Oswald|Ubuntu+Mono" rel="stylesheet">
+    <style>
+      html, body {
+        background: #172a3a;
+        margin: 0;
+        padding: 0;
+        color: rgba(255, 255, 255, 0.6);
+        font-family: 'Oswald', sans-serif;
+      }
+      main {
+        width: 100%;
+        height: 100%;
+        position: absolute;
+        display: flex;
+        flex-direction: column;
+      }
+      h1 { text-indent: 2rem; }
+      input, select {
+        color: rgba(255, 255, 255, 0.6);
+        font-size: 13px;
+        background: rgb(15, 32, 45);
+        border-radius: 4px;
+        border-width: 1px;
+        border-style: solid;
+        border-color: rgb(9, 20, 28);
+        border-image: initial;
+        padding: 6px 12px;
+      }
+      form {
+        background: rgb(9, 20, 28);
+        padding: 2rem;
+        display: flex;
+      }
+      form > * {
+        flex: 1;
+        display: flex;
+      }
+      form input, form select {
+        flex: 1;
+        margin: 0 20px;
+      }
+      #work-area {
+        display: flex;
+        flex: 1;
+      }
+      #work-area > section {
+        flex: 1;
+        display: flex;
+        flex-direction: column;
+        padding: 0 1rem;
+      }
+      #work-area #left {
+        background: rgb(15, 32, 45);
+      }
+      #work-area #right {
+        background: rgb(23, 43, 58);
+      }
+      #work-area textarea {
+        height: 100%;
+        padding: 1rem;
+        background: rgb(23, 43, 58);
+        color: rgba(255, 255, 255, 0.6);
+        font-size: 16px;
+        border: none;
+      }
+      button {
+        position: absolute;
+        left: 50%;
+        margin-left: -36px;
+        border-radius: 50px;
+        height: 70px;
+        width: 70px;
+        margin-top: 10rem;
+        background: rgb(39, 174, 96);
+        border: 5px solid rgb(9, 20, 28);
+        font-size: 40px;
+        padding-left: 13px;
+        cursor: pointer;
+      }
+      pre {
+        padding: 1rem;
+        height: 100%;
+        font-family: 'Ubuntu Mono', monospace;
+      }
+      .string { color: rgb(41, 185, 115); }
+      .number { color: rgb(241, 143, 1); }
+      .boolean { color: rgb(214, 66, 146); }
+      .null { color: rgb(40, 130, 249); }
+      .key { color: rgb(241, 143, 1); }
+    </style>
   </head>
   <body>
-    <h1>Mongo Playground</h1>
+    <main>
+      <h1>Mongo Playground</h1>
+      <form id="form">
+        <label>URL: <input type="text" name="url" required></label>
+        <label>Method:
+          <select name="method" required>
+            <option value="aggregate">aggregate</option>
+            <option value="bulkWrite">bulkWrite</option>
+            <option value="copyTo">copyTo</option>
+            <option value="count">count</option>
+            <option value="countDocuments">countDocuments</option>
+            <option value="estimatedDocumentCount">estimatedDocumentCount</option>
+            <option value="createIndex">createIndex</option>
+            <option value="createIndexes">createIndexes</option>
+            <option value="dataSize">dataSize</option>
+            <option value="deleteOne">deleteOne</option>
+            <option value="deleteMany">deleteMany</option>
+            <option value="distinct">distinct</option>
+            <option value="drop">drop</option>
+            <option value="dropIndex">dropIndex</option>
+            <option value="dropIndexes">dropIndexes</option>
+            <option value="ensureIndex">ensureIndex</option>
+            <option value="explain">explain</option>
+            <option value="find">find</option>
+            <option value="findAndModify">findAndModify</option>
+            <option value="findOne">findOne</option>
+            <option value="findOneAndDelete">findOneAndDelete</option>
+            <option value="findOneAndReplace">findOneAndReplace</option>
+            <option value="findOneAndUpdate">findOneAndUpdate</option>
+            <option value="getIndexes">getIndexes</option>
+            <option value="getShardDistribution">getShardDistribution</option>
+            <option value="getShardVersion">getShardVersion</option>
+            <option value="group">group</option>
+            <option value="insert">insert</option>
+            <option value="insertOne">insertOne</option>
+            <option value="insertMany">insertMany</option>
+            <option value="isCapped">isCapped</option>
+            <option value="latencyStats">latencyStats</option>
+            <option value="mapReduce">mapReduce</option>
+            <option value="reIndex">reIndex</option>
+            <option value="remove">remove</option>
+            <option value="renameCollection">renameCollection</option>
+            <option value="replaceOne">replaceOne</option>
+            <option value="save">save</option>
+            <option value="stats">stats</option>
+            <option value="storageSize">storageSize</option>
+            <option value="totalIndexSize">totalIndexSize</option>
+            <option value="totalSize">totalSize</option>
+            <option value="update">update</option>
+            <option value="updateOne">updateOne</option>
+            <option value="updateMany">updateMany</option>
+            <option value="watch">watch</option>
+            <option value="validate">validate</option>
+          </select>
+        </label>
+        <label>Collection name: <input type="text" name="collection" required></label>
+      </form>
+      <section id="work-area">
+        <section id="left">
+          <h2>Query to execute:</h2>
+          <textarea name="data" id="data" cols="30" rows="10"></textarea>
+        </section>
+        <section id="right">
+          <h2>Response:</h2>
+          <pre id="response"></pre>
+        </section>
+        <button title="Execute">&#x25B6;</button>
+      </section>
+    </main>
+
+    <script>
+      /**
+       * Syntax highlight JSON
+       * @param {object|string} json - JSON text to syntax highlight
+       * @returns {string}
+       */
+      const syntaxHighlight = (json) => {
+        if (typeof json !== 'string') {
+          json = JSON.stringify(json, undefined, 2);
+        }
+        json = json.replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;');
+        return json.replace(/("(\\u[a-zA-Z0-9]{4}|\\[^u]|[^\\"])*"(\s*:)?|\b(true|false|null)\b|-?\d+(?:\.\d*)?(?:[eE][+\-]?\d+)?)/g, function (match) {
+          var cls = 'number';
+          if (/^"/.test(match)) {
+            if (/:$/.test(match)) cls = 'key';
+            else cls = 'string';
+          } else if (/true|false/.test(match)) cls = 'boolean';
+          else if (/null/.test(match)) cls = 'null';
+
+          return '<span class="' + cls + '">' + match + '</span>';
+        });
+      }
+
+      /**
+       * Handle form submission
+       */
+      document.querySelector('button').addEventListener('click', (event) => {
+        event.preventDefault();
+
+        const form = document.querySelector('#form');
+        const data = document.querySelector('textarea').value;
+
+        // Prepare body data
+        let body = {
+          url: form.url.value,
+          method: form.method.value,
+          collection: form.collection.value,
+          data,
+        };
+
+        if (!body.url || !body.method || !body.collection) return;
+
+        body = JSON.stringify(body);
+
+        // Send data
+        const xhr = new XMLHttpRequest();
+        xhr.open('POST', '/', true);
+        xhr.responseType = 'json';
+        xhr.setRequestHeader('Content-Type', 'application/json');
+
+        // Handle response
+        xhr.addEventListener('readystatechange', function () {
+          if (this.readyState === 4) {
+            // Check for errors
+            if (this.status === 500) {
+              document.querySelector('#response')
+                .textContent = this.statusText;
+            } else {
+              // No errors
+              document.querySelector('#response')
+                .innerHTML = syntaxHighlight(this.response);
+            }
+          }
+        });
+
+        xhr.send(body);
+      });
+    </script>
   </body>
 </html>
