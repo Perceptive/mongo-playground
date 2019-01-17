@@ -75,7 +75,7 @@
         font-size: 16px;
         border: none;
       }
-      button {
+      #execute {
         position: absolute;
         left: 50%;
         margin-left: -36px;
@@ -86,9 +86,34 @@
         background: rgb(39, 174, 96);
         border: 5px solid rgb(9, 20, 28);
         font-size: 40px;
-        padding-left: 13px;
         cursor: pointer;
       }
+      #execute > .play {
+        margin-left: 20px;
+        position: relative;
+        top: 2px;
+      }
+      #loader {
+        display: inline-block;
+        width: 45px;
+        height: 45px;
+        border: 3px solid rgba(255,255,255,.3);
+        border-radius: 50%;
+        border-top-color: #fff;
+        animation: spin 1s ease-in-out infinite;
+        -webkit-animation: spin 1s ease-in-out infinite;
+        position: absolute;
+        left: 10px;
+        top: 10px;
+      }
+
+      @keyframes spin {
+        to { -webkit-transform: rotate(360deg); }
+      }
+      @-webkit-keyframes spin {
+        to { -webkit-transform: rotate(360deg); }
+      }
+
       pre {
         padding: 1rem;
         margin: 0;
@@ -102,6 +127,8 @@
       .boolean { color: rgb(214, 66, 146); }
       .null { color: rgb(40, 130, 249); }
       .key { color: rgb(241, 143, 1); }
+
+      .hide { display: none !important; }
     </style>
   </head>
   <body>
@@ -171,7 +198,10 @@
           <h2>Response:</h2>
           <pre id="response"></pre>
         </section>
-        <button title="Execute">&#x25B6;</button>
+        <div id="execute" title="Execute">
+          <span class="play">&#x25B6;</span>
+          <span id="loader" class="hide"></span>
+        </div>
       </section>
     </main>
 
@@ -206,8 +236,12 @@
       /**
        * Handle form submission
        */
-      document.querySelector('button').addEventListener('click', (event) => {
+      document.querySelector('#execute').addEventListener('click', (event) => {
         event.preventDefault();
+
+        // Show loading spinner
+        document.querySelector('#execute .play').classList.add('hide');
+        document.querySelector('#loader').classList.remove('hide');
 
         const form = document.querySelector('#form');
 
@@ -240,6 +274,10 @@
           const response = document.querySelector('#response');
 
           if (this.readyState === 4) {
+            // Hide loading spinner
+            document.querySelector('#loader').classList.add('hide');
+            document.querySelector('#execute .play').classList.remove('hide');
+
             result = this.response;
 
             if (result && result instanceof Array) {
