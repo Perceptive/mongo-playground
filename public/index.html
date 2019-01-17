@@ -187,7 +187,10 @@
             <option value="validate">validate</option>
           </select>
         </label>
-        <label>Collection name: <input type="text" name="collection" required></label>
+        <label>Collection name:
+          <select name="collection" required>
+          </select>
+        </label>
       </form>
       <section id="work-area">
         <section id="left">
@@ -232,6 +235,40 @@
           return '<span class="' + cls + '">' + match + '</span>';
         });
       }
+
+      /**
+       * Query list of collections to aid user when user leaves the URL field
+       */
+      document.querySelector('#form [name="url"]').addEventListener('blur', (event) => {
+        let body = {
+          url: event.target.value,
+        }
+        if (!body.url) return;
+
+        body = JSON.stringify(body);
+
+        // Send request
+        const xhr = new XMLHttpRequest();
+        xhr.open('POST', '/get-collections', true);
+        xhr.responseType = 'json';
+        xhr.setRequestHeader('Content-Type', 'application/json');
+
+        // Handle response
+        xhr.addEventListener('readystatechange', function () {
+          if (this.readyState === 4) {
+            const select = document.querySelector('#form select[name="collection"]');
+            
+            this.response.forEach((col) => {
+              const option = document.createElement('option');
+              option.value = col.name;
+              option.textContent = col.name;
+              select.appendChild(option);
+            });
+          }
+        });
+
+        xhr.send(body);
+      });
 
       /**
        * Handle form submission

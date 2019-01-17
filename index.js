@@ -49,4 +49,31 @@ app.post('/', async (req, res) => {
   }
 });
 
-app.listen(port, () => console.log(`Listening on port ${port}!`));
+// Get list of collections
+app.post('/get-collections', async (req, res) => {
+  const { url } = req.body;
+
+  // Connect to mongo instance
+  const db = new MongoConnection(url);
+
+  try {
+    await db.open();
+  } catch (e) {
+    console.error(e);
+    return res.status(500).send(e);
+  }
+
+  // Execute request
+  try {
+    const result = await db.listCollections().toArray();
+
+    db.close();
+
+    return res.status(200).send(result);
+  } catch (e) {
+    console.error(e);
+    return res.status(400).send(e);
+  }
+});
+
+app.listen(port, () => console.log(`Listening on port ${port}`));

@@ -18,6 +18,10 @@ class MongoConnection {
   collection(name) {
     return this.db.collection(name);
   }
+
+  listCollections() {
+    return this.db.listCollections();
+  }
 }
 
 module.exports = MongoConnection;
