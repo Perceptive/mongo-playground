@@ -245,8 +245,19 @@
         xhr.addEventListener('readystatechange', function () {
           if (this.readyState === 4) {
             const select = document.querySelector('#form select[name="collection"]');
+
+            if (!this.response || !(this.response instanceof Array)) return;
+
+            // Sort the array by name
+            this.response.sort((first, second) => {
+              const a = first.name.toUpperCase();
+              const b = second.name.toUpperCase();
+              if (a < b) return -1;
+              return 1;
+            })
             
-            this.response.forEach((col) => {
+            // Then populate select field
+            .forEach((col) => {
               const option = document.createElement('option');
               option.value = col.name;
               option.textContent = col.name;
