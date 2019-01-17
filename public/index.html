@@ -20,6 +20,16 @@
         flex-direction: column;
       }
       h1 { text-indent: 2rem; }
+
+      /* Disable chrome autofill input field coloring */
+      input:-webkit-autofill,
+      input:-webkit-autofill:hover, 
+      input:-webkit-autofill:focus, 
+      input:-webkit-autofill:active {
+        -webkit-box-shadow: 0 0 0 30px rgb(15, 32, 45) inset !important;
+        -webkit-text-fill-color: rgba(255, 255, 255, 0.6) !important;
+      }
+
       input, select {
         color: rgba(255, 255, 255, 0.6);
         font-size: 13px;
