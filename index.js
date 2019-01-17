@@ -25,17 +25,27 @@ app.post('/', async (req, res) => {
     await db.open();
   } catch (e) {
     console.error(e);
-    return res.status(500).send(`Error occurred while connecting to database ${url}`);
+    return res.status(500).send(e);
   }
 
   // Execute request
   try {
-    const result = await db.collection(collection)[method](data ? JSON.parse(data) : {});
+    let result = await db.collection(collection)[method](data || {});
+
+    switch (method) {
+      case 'aggregate':
+      case 'find':
+        result = await result.toArray();
+        break;
+      default:
+    }
+
     db.close();
-    return res.status(200).send(JSON.stringify(result));
+
+    return res.status(200).send(result);
   } catch (e) {
     console.error(e);
-    return res.status(500).send(`Error occurred while executing method "${method}" on collection "${collection}"`);
+    return res.status(400).send(e);
   }
 });
 

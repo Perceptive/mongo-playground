@@ -98,7 +98,7 @@
         overflow: auto;
       }
       .string { color: rgb(41, 185, 115); }
-      .number { color: rgb(241, 143, 1); }
+      .number { color: rgb(51, 147, 220); }
       .boolean { color: rgb(214, 66, 146); }
       .null { color: rgb(40, 130, 249); }
       .key { color: rgb(241, 143, 1); }
@@ -177,6 +177,11 @@
 
     <script>
       /**
+       * Hold result in memory for pagination
+       */
+      let result;
+
+      /**
        * Syntax highlight JSON
        * @param {object|string} json - JSON text to syntax highlight
        * @returns {string}
@@ -205,7 +210,12 @@
         event.preventDefault();
 
         const form = document.querySelector('#form');
-        const data = document.querySelector('textarea').value;
+
+        // We use eval here since it's the only way to convert textarea
+        // value into JavaScript given that the value may not be proper
+        // JSON and formatting a JavaScript object into proper JSON is
+        // a huge pain.
+        const data = eval(document.querySelector('textarea').value);
 
         // Prepare body data
         let body = {
@@ -227,16 +237,14 @@
 
         // Handle response
         xhr.addEventListener('readystatechange', function () {
+          const response = document.querySelector('#response');
+
           if (this.readyState === 4) {
-            // Check for errors
-            if (this.status === 500) {
-              document.querySelector('#response')
-                .textContent = this.statusText;
-            } else {
-              // No errors
-              document.querySelector('#response')
-                .innerHTML = syntaxHighlight(this.response);
-            }
+            result = this.response;
+
+            if (result && result instanceof Array) {
+              response.innerHTML = syntaxHighlight(result.slice(0, 10));
+            } else response.innerHTML = syntaxHighlight(result);
           }
         });
 
@@ -264,6 +272,7 @@
 
           // Place cursor after spaces
           textarea.selectionStart = start + 2;
+          textarea.selectionEnd = textarea.selectionStart;
         }
 
         // Braces and brackets
@@ -281,6 +290,7 @@
             textarea.value = `${first}[]${last}`;
             textarea.selectionStart = start + 1;
           }
+          textarea.selectionEnd = textarea.selectionStart;
         }
 
         // Quotes
@@ -291,6 +301,7 @@
           else textarea.value = `${first}''${last}`;
 
           textarea.selectionStart = start + 1;
+          textarea.selectionEnd = textarea.selectionStart;
         }
 
         // Enter button
@@ -310,9 +321,8 @@
               textarea.value = `${first}\n${last}`;
               textarea.selectionStart = start + 1;
           }
+          textarea.selectionEnd = textarea.selectionStart;
         }
-
-        textarea.selectionEnd = textarea.selectionStart;
       });
     </script>
   </body>
