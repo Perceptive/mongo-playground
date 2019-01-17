@@ -53,12 +53,8 @@
         display: flex;
         flex-direction: column;
         padding: 0 1rem;
-      }
-      #work-area #left {
+        overflow: auto;
         background: rgb(15, 32, 45);
-      }
-      #work-area #right {
-        background: rgb(23, 43, 58);
       }
       #work-area textarea {
         height: 100%;
@@ -84,8 +80,11 @@
       }
       pre {
         padding: 1rem;
+        margin: 0;
         height: 100%;
         font-family: 'Ubuntu Mono', monospace;
+        background: rgb(23, 43, 58);
+        overflow: auto;
       }
       .string { color: rgb(41, 185, 115); }
       .number { color: rgb(241, 143, 1); }
