@@ -4,9 +4,21 @@ I haven't liked any of the Mongo tools out there and using mongo from the CLI
 is unwieldy, especially for complicated aggregations.  Mongo Playground is
 themed from the GraphQL Playground, which was based upon GraphiQL.
 
+## Features
+
+* Supports queries using latest MongoDB Driver 3.1
+* Connects to any MongoDB server using `mongodb` or `mongodb+srv` URLs
+* Drop down lists all available methods
+* Auto-populates list of collections to query
+* Syntax highlighting and pretty printing of response data, including errors
+* Helpful auto-formatting in textarea
+* Nice interface 👍
+
 ## Using
 
 ```Shell
+git clone https://github.com/Perceptive/mongo-playground.git
+npm install
 npm start
 ```
 

@@ -2,7 +2,6 @@
   "name": "mongo-playground",
   "version": "1.0.0",
   "description": "Helps developers run mongo queries",
-  "private": true,
   "main": "index.js",
   "scripts": {
     "start": "node index"
@@ -13,10 +12,15 @@
   },
   "keywords": [
     "mongo",
-    "mongodb"
+    "mongodb",
+    "playground",
+    "developer-tools",
+    "development",
+    "devops",
+    "devops-tools"
   ],
   "author": "Micah Henning <micah@perceptive.io>",
-  "license": "UNLICENSED",
+  "license": "MIT",
   "bugs": {
     "url": "https://github.com/Perceptive/mongo-playground/issues"
   },
