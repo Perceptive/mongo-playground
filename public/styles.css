@@ -13,6 +13,44 @@ main {
   flex-direction: column;
 }
 
+#tabs {
+  position: absolute;
+  right: 0;
+  display: flex;
+  align-items: flex-end;
+}
+#tabs > ul {
+  list-style: none;
+  padding: 0;
+  margin: 46px 0 0;
+}
+#tabs > ul > li {
+  background: rgb(15, 32, 45);
+  padding: 10px;
+  cursor: pointer;
+  margin: 0 10px 0 0;
+  display: inline-block;
+}
+#tabs span.add {
+  width: 50px;
+  text-align: center;
+  font-size: 25px;
+  font-family: verdana, sans-serif;
+  cursor: pointer;
+  line-height: 44px;
+  background: rgb(15, 32, 45);
+}
+#tabs > ul > li.active, #tabs > ul > li:hover, #tabs span.add:hover {
+  background: rgb(9, 20, 28);
+}
+#tabs span.close {
+  font-family: verdana, sans-serif;
+  margin-left: 10px;
+}
+#tabs span.close:hover {
+  color: #c00;
+}
+
 #tab-container {
   display: flex;
   flex: 1;
@@ -58,6 +96,7 @@ form input, form select {
   flex: 1;
   margin: 0 20px;
 }
+
 .work-area {
   display: flex;
   flex: 1;

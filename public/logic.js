@@ -92,65 +92,6 @@
   };
 
   /**
-   * Query list of collections to aid user when user leaves the URL field
-   * @param {Event} event
-   */
-  const queryCollections = tabName => (event) => {
-    let body = {
-      url: event.target.value,
-    };
-    if (!body.url) return;
-
-    body = JSON.stringify(body);
-
-    // Send request
-    const xhr = new XMLHttpRequest();
-    xhr.open('POST', '/get-collections', true);
-    xhr.responseType = 'json';
-    xhr.setRequestHeader('Content-Type', 'application/json');
-
-    // Handle response
-    xhr.addEventListener('readystatechange', function handleResponse() {
-      if (this.readyState === 4) {
-        let collections = this.response;
-
-        if (!collections || !(collections instanceof Array)) return;
-
-        // Sort the array by name
-        collections = collections.sort((first, second) => {
-          const a = first.name.toUpperCase();
-          const b = second.name.toUpperCase();
-          if (a < b) return -1;
-          return 1;
-        });
-
-        // Get settings
-        const tab = tabs.get(tabName);
-        tab.collections = collections;
-        tabs.set(tabName, tab);
-
-        // Add to local storage
-        localStorage.setItem('settings', JSON.stringify(
-          // LocalStorage doesn't support objects as values and
-          // maps can't be stringified, so first convert to array
-          { tabs: Array.from(tabs.entries()) },
-        ));
-
-        // Then populate select field
-        const collectionInput = document.querySelector(`#${tabName} form [name="collection"]`);
-        collections.forEach((col) => {
-          const option = document.createElement('option');
-          option.value = col.name;
-          option.textContent = col.name;
-          collectionInput.appendChild(option);
-        });
-      }
-    });
-
-    xhr.send(body);
-  };
-
-  /**
    * Handle form submission
    */
   const submitForm = tabName => (event) => {
@@ -307,27 +248,154 @@
   };
 
   /**
+   * Close an open tab
+   * @param {Event} event
+   */
+  const closeTab = (event) => {
+    event.stopPropagation();
+
+    const tab = event.target.parentElement;
+
+    // Remove data object from settings
+    tabs.delete(tab.dataset.tabName);
+
+    // Commit change to local storage
+    localStorage.setItem('settings', JSON.stringify(
+      // LocalStorage doesn't support objects as values and
+      // maps can't be stringified, so first convert to array
+      { tabs: Array.from(tabs.values()) },
+    ));
+
+    // Remove page elements
+    document.querySelector(`#${tab.dataset.tabName}`).remove();
+    tab.remove();
+
+    // Click next tab
+    const next = Array.from(tabs.keys())[tabs.size - 1];
+    const nextTab = document.querySelector(`#tabs li[data-tab-name="${next}"]`);
+    nextTab.click();
+  };
+
+  /**
+   * Update tab text
+   * @param {Element} tab
+   * @param {object} tabData
+   */
+  const updateTabText = (tab, tabData) => {
+    // Create tab close action
+    const close = document.createElement('span');
+    close.classList.add('close');
+    close.textContent = 'X';
+    close.title = 'Close tab';
+    close.addEventListener('click', closeTab);
+
+    // Apply update
+    const thisTab = tab;
+    thisTab.textContent = `${tabData.collection} (${tabData.method})`;
+    thisTab.appendChild(close);
+  };
+
+  /**
+   * Query list of collections to aid user when user leaves the URL field
+   * @param {Event} event
+   */
+  const queryCollections = tabName => (event) => {
+    let body = {
+      url: event.target.value,
+    };
+    if (!body.url) return;
+
+    body = JSON.stringify(body);
+
+    // Send request
+    const xhr = new XMLHttpRequest();
+    xhr.open('POST', '/get-collections', true);
+    xhr.responseType = 'json';
+    xhr.setRequestHeader('Content-Type', 'application/json');
+
+    // Handle response
+    xhr.addEventListener('readystatechange', function handleResponse() {
+      if (this.readyState === 4) {
+        let collections = this.response;
+
+        if (!collections || !(collections instanceof Array)) return;
+
+        // Sort the array by name
+        collections = collections.sort((first, second) => {
+          const a = first.name.toUpperCase();
+          const b = second.name.toUpperCase();
+          if (a < b) return -1;
+          return 1;
+        });
+
+        // Get settings
+        const tabData = tabs.get(tabName);
+        tabData.collections = collections;
+        tabData.collection = collections[0].name;
+        tabs.set(tabName, tabData);
+
+        // Add to local storage
+        localStorage.setItem('settings', JSON.stringify(
+          // LocalStorage doesn't support objects as values and
+          // maps can't be stringified, so first convert to array
+          { tabs: Array.from(tabs.values()) },
+        ));
+
+        // Then populate select field
+        const collectionInput = document.querySelector(`#${tabName} form [name="collection"]`);
+        collections.forEach((col) => {
+          const option = document.createElement('option');
+          option.value = col.name;
+          option.textContent = col.name;
+          collectionInput.appendChild(option);
+        });
+
+        // Update tab name with first collection
+        const tab = document.querySelector(`#tabs li[data-tab-name="${tabName}"]`);
+        updateTabText(tab, tabData);
+      }
+    });
+
+    xhr.send(body);
+  };
+
+  /**
    * Keep state with local storage
+   * @param {Event} event
    */
   const keepState = tabName => (event) => {
     const { name } = event.target;
 
-    // Set item
-    const tab = tabs.get(tabName);
-    tab[name] = event.target.value;
-    tabs.set(tabName, tab);
+    // Set url, method, and collection all at once
+    const urlInput = document.querySelector(`#${tabName} form [name="url"]`);
+    const methodInput = document.querySelector(`#${tabName} form [name="method"]`);
+    const collectionInput = document.querySelector(`#${tabName} form [name="collection"]`);
+
+    const tabData = tabs.get(tabName);
+
+    tabData[name] = event.target.value;
+    tabData.url = urlInput.value;
+    tabData.method = methodInput.value;
+    tabData.collection = collectionInput.value;
+
+    tabs.set(tabName, tabData);
 
     localStorage.setItem('settings', JSON.stringify(
       // LocalStorage doesn't support objects as values and
       // maps can't be stringified, so first convert to array
-      { tabs: Array.from(tabs.entries()) },
+      { tabs: Array.from(tabs.values()) },
     ));
+
+    // Update tab name accordingly
+    const tab = document.querySelector(`#tabs li[data-tab-name="${tabName}"]`);
+    updateTabText(tab, tabData);
   };
 
   /**
-   * Create a new tab
+   * Create a new tab object
    * @param {object} settings
-   * @param {string} tabName - i.e. "tab1", "tab2"
+   * @param {string} tabName - Randomly generated name
+   * @returns {object}
    */
   const createTab = (settings, tabName) => {
     const tab = {
@@ -340,8 +408,24 @@
     };
 
     // Create tab
+    const tabMenu = document.createElement('li');
+    tabMenu.dataset.tabName = tabName;
+    if (tab.collection) tabMenu.textContent = `${tab.collection} (${tab.method})`;
+    else tabMenu.textContent = 'New tab';
+
+    // Create tab close action
+    const close = document.createElement('span');
+    close.classList.add('close');
+    close.textContent = 'X';
+    close.title = 'Close tab';
+    close.addEventListener('click', closeTab);
+
+    tabMenu.appendChild(close);
+    document.querySelector('#tabs ul').appendChild(tabMenu);
+
+    // Create tab container
     const tabElement = document.createElement('section');
-    tabElement.classList.add('tab');
+    tabElement.classList.add('tab', 'hide');
     tabElement.id = tabName;
 
     const MONGO_METHODS = [
@@ -449,8 +533,8 @@
 
     // Keep persistent state
     urlInput.addEventListener('blur', keepState(tabName));
-    methodInput.addEventListener('blur', keepState(tabName));
-    collectionInput.addEventListener('blur', keepState(tabName));
+    methodInput.addEventListener('change', keepState(tabName));
+    collectionInput.addEventListener('change', keepState(tabName));
     textarea.addEventListener('blur', keepState(tabName));
 
     // Check textarea for eval errors
@@ -472,22 +556,51 @@
   };
 
   /**
+   * Handle clicking tabs
+   * @param {Event} event
+   */
+  const handleTabClick = (event) => {
+    const { tabName } = event.target.dataset;
+
+    // Show work area for this tab
+    document.querySelectorAll('#tab-container > .tab').forEach((t) => {
+      t.classList.add('hide');
+      if (t.id === tabName) t.classList.remove('hide');
+    });
+
+    // And set this tab active
+    document.querySelectorAll('#tabs li').forEach((t) => {
+      t.classList.remove('active');
+      if (t.dataset.tabName === tabName) t.classList.add('active');
+    });
+  };
+
+  /**
+   * Handle adding a new tab
+   */
+  const addNewTab = (data = {}, tabName = `tab${Math.random().toString(36).substr(2, 8)}`) => {
+    tabs.set(tabName, createTab(data, tabName));
+
+    // Set active by clicking tab
+    const tab = document.querySelector(`#tabs li[data-tab-name="${tabName}"]`);
+    tab.addEventListener('click', handleTabClick);
+    tab.click();
+  };
+  document.querySelector('#tabs .add').addEventListener('click', addNewTab);
+
+  /**
    * Restore settings and create tabs on load
    */
   window.addEventListener('load', () => {
     let settings = localStorage.getItem('settings');
 
+    tabs = new Map();
+
     if (settings) {
-      settings = JSON.parse(settings);
-      tabs = new Map(settings.tabs);
+      settings = JSON.parse(settings).tabs;
 
       // For each tab
-      tabs.forEach((tab, tabName) => createTab(tab, tabName));
-    } else {
-      // Create a new tabs map and create first tab
-      tabs = new Map();
-      const tabName = `tab${tabs.size + 1}`;
-      tabs.set(tabName, createTab({}, tabName));
-    }
+      settings.forEach(data => addNewTab(data));
+    } else addNewTab();
   });
 })(window);
