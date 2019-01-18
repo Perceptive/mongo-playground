@@ -291,10 +291,6 @@
       document.querySelector('#execute').addEventListener('click', (event) => {
         event.preventDefault();
 
-        // Show loading spinner
-        document.querySelector('#execute .play').classList.add('hide');
-        document.querySelector('#loader').classList.remove('hide');
-
         const form = document.querySelector('#form');
 
         // We use eval here since it's the only way to convert textarea
@@ -312,6 +308,10 @@
         };
 
         if (!body.url || !body.method || !body.collection) return;
+
+        // Show loading spinner
+        document.querySelector('#execute .play').classList.add('hide');
+        document.querySelector('#loader').classList.remove('hide');
 
         body = JSON.stringify(body);
 
