@@ -100,6 +100,7 @@ form input, form select {
 .work-area {
   display: flex;
   flex: 1;
+  position: relative;
 }
 .work-area > section {
   flex: 1;

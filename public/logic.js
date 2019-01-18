@@ -2,6 +2,18 @@
   document, localStorage, XMLHttpRequest,
 }) => {
   /**
+   * Support for serializing regular expressions to JSON
+   */
+  // eslint-disable-next-line no-extend-native
+  RegExp.prototype.toJSON = function toJSON() {
+    const regex = this.toString();
+    const $regex = regex.replace(/^\/|\/[gim]{0,3}$/ig, '');
+    const $options = regex.match(/\/[gim]{0,3}$/ig)[0].replace('/', '') || undefined;
+
+    return { $regex, $options };
+  };
+
+  /**
    * Keep Tabs
    * @type {Map}
    */
@@ -103,15 +115,16 @@
     // value into JavaScript given that the value may not be proper
     // JSON and formatting a JavaScript object into proper JSON is
     // a huge pain.
+    // At the same time, eval ignores objects so wrap in array just for op
     // eslint-disable-next-line no-eval
-    const data = eval(document.querySelector(`#${tabName} textarea`).value);
+    const data = eval(`[${document.querySelector(`#${tabName} textarea`).value}]`);
 
     // Prepare body data
     let body = {
       url: form.url.value,
       method: form.method.value,
       collection: form.collection.value,
-      data,
+      data: data[0],
     };
 
     if (!body.url || !body.method || !body.collection) return;
