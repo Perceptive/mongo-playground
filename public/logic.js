@@ -356,6 +356,7 @@
 
         // Then populate select field
         const collectionInput = document.querySelector(`#${tabName} form [name="collection"]`);
+        collectionInput.innerHTML = ''; // Remove existing fields
         collections.forEach((col) => {
           const option = document.createElement('option');
           option.value = col.name;
