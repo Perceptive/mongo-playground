@@ -1,21 +1,11 @@
 (({
-  document, localStorage, XMLHttpRequest, hljs,
+  document, localStorage, XMLHttpRequest,
 }) => {
   /**
-   * Quick references for page elements
+   * Keep Tabs
+   * @type {Map}
    */
-  const url = document.querySelector('#form [name="url"]');
-  const method = document.querySelector('#form [name="method"]');
-  const collection = document.querySelector('#form [name="collection"]');
-  const textarea = document.querySelector('textarea');
-  const submit = document.querySelector('#execute');
-  const prettySection = document.querySelector('#textarea-highlight');
-
-  /**
-   * Web worker used for syntax highlighting
-   */
-  const worker = new Worker('worker.js');
-  worker.onmessage = (event) => { prettySection.innerHTML = event.data; };
+  let tabs;
 
   /**
    * Hold result in memory for pagination
@@ -50,6 +40,7 @@
 
   /**
    * Interval used for making syntax highlighting feel smoother
+   * @type {Interval}
    */
   let interval;
 
@@ -58,8 +49,9 @@
    * We actually accomplish this by syntax highlighting over the top
    * of the textarea, but since the section containing the markup
    * has a CSS pointer-events:none; property, the user is none the wiser
+   * @param {Event} event
    */
-  textarea.addEventListener('keydown', (event) => {
+  const highlightTextarea = (textarea, prettySection, worker) => (event) => {
     const keyCode = event.keyCode || event.which;
 
     // Ignore certain key codes
@@ -97,12 +89,13 @@
 
       clearInterval(interval);
     }, 0);
-  });
+  };
 
   /**
    * Query list of collections to aid user when user leaves the URL field
+   * @param {Event} event
    */
-  url.addEventListener('blur', (event) => {
+  const queryCollections = tabName => (event) => {
     let body = {
       url: event.target.value,
     };
@@ -132,41 +125,45 @@
         });
 
         // Get settings
-        let settings = localStorage.getItem('tab1');
-        if (settings) settings = JSON.parse(settings);
-        else settings = {};
+        const tab = tabs.get(tabName);
+        tab.collections = collections;
+        tabs.set(tabName, tab);
 
         // Add to local storage
-        settings.collections = collections;
-        localStorage.setItem('tab1', JSON.stringify(settings));
+        localStorage.setItem('settings', JSON.stringify(
+          // LocalStorage doesn't support objects as values and
+          // maps can't be stringified, so first convert to array
+          { tabs: Array.from(tabs.entries()) },
+        ));
 
         // Then populate select field
+        const collectionInput = document.querySelector(`#${tabName} form [name="collection"]`);
         collections.forEach((col) => {
           const option = document.createElement('option');
           option.value = col.name;
           option.textContent = col.name;
-          collection.appendChild(option);
+          collectionInput.appendChild(option);
         });
       }
     });
 
     xhr.send(body);
-  });
+  };
 
   /**
    * Handle form submission
    */
-  submit.addEventListener('click', (event) => {
+  const submitForm = tabName => (event) => {
     event.preventDefault();
 
-    const form = document.querySelector('#form');
+    const form = document.querySelector(`#${tabName} form`);
 
     // We use eval here since it's the only way to convert textarea
     // value into JavaScript given that the value may not be proper
     // JSON and formatting a JavaScript object into proper JSON is
     // a huge pain.
     // eslint-disable-next-line no-eval
-    const data = eval(document.querySelector('textarea').value);
+    const data = eval(document.querySelector(`#${tabName} textarea`).value);
 
     // Prepare body data
     let body = {
@@ -179,8 +176,11 @@
     if (!body.url || !body.method || !body.collection) return;
 
     // Show loading spinner
-    document.querySelector('#execute .play').classList.add('hide');
-    document.querySelector('#loader').classList.remove('hide');
+    const loader = document.querySelector(`#${tabName} .loader`);
+    const play = document.querySelector(`#${tabName} .execute .play`);
+
+    play.classList.add('hide');
+    loader.classList.remove('hide');
 
     body = JSON.stringify(body);
 
@@ -192,12 +192,12 @@
 
     // Handle response
     xhr.addEventListener('readystatechange', function handleResponse() {
-      const response = document.querySelector('#response');
+      const response = document.querySelector(`#${tabName} .response`);
 
       if (this.readyState === 4) {
         // Hide loading spinner
-        document.querySelector('#loader').classList.add('hide');
-        document.querySelector('#execute .play').classList.remove('hide');
+        loader.classList.add('hide');
+        play.classList.remove('hide');
 
         result = this.response;
 
@@ -208,12 +208,14 @@
     });
 
     xhr.send(body);
-  });
+  };
 
   /**
    * Help save user some time in textarea
+   * @param {Event} event
    */
-  textarea.addEventListener('keydown', (event) => {
+  const helpUserWriteQuery = (event) => {
+    const textarea = event.target;
     const keyCode = event.keyCode || event.which;
 
     const start = textarea.selectionStart;
@@ -281,13 +283,14 @@
       }
       textarea.selectionEnd = textarea.selectionStart;
     }
-  });
+  };
 
   /**
    * Let user know if textarea code is malformed
+   * @param {Event} event
    */
-  textarea.addEventListener('keyup', (event) => {
-    const error = document.querySelector('#left .error');
+  const checkTextareaForErrors = tabName => (event) => {
+    const error = document.querySelector(`#${tabName} .left .error`);
 
     try {
       // We are deliberately using eval here since it does all the heavy
@@ -301,57 +304,190 @@
 
     // Reset error message
     error.innerHTML = '';
-  });
+  };
 
   /**
    * Keep state with local storage
    */
-  const keepState = (event) => {
+  const keepState = tabName => (event) => {
     const { name } = event.target;
 
-    // Get settings
-    let settings = localStorage.getItem('tab1');
-
-    if (!settings) settings = {};
-    else settings = JSON.parse(settings);
-
     // Set item
-    settings[name] = event.target.value;
-    localStorage.setItem('tab1', JSON.stringify(settings));
+    const tab = tabs.get(tabName);
+    tab[name] = event.target.value;
+    tabs.set(tabName, tab);
+
+    localStorage.setItem('settings', JSON.stringify(
+      // LocalStorage doesn't support objects as values and
+      // maps can't be stringified, so first convert to array
+      { tabs: Array.from(tabs.entries()) },
+    ));
   };
 
-  url.addEventListener('blur', keepState);
-  method.addEventListener('blur', keepState);
-  collection.addEventListener('blur', keepState);
-  textarea.addEventListener('blur', keepState);
+  /**
+   * Create a new tab
+   * @param {object} settings
+   * @param {string} tabName - i.e. "tab1", "tab2"
+   */
+  const createTab = (settings, tabName) => {
+    const tab = {
+      url: '',
+      method: '',
+      collections: [],
+      collection: '',
+      data: '',
+      ...settings,
+    };
+
+    // Create tab
+    const tabElement = document.createElement('section');
+    tabElement.classList.add('tab');
+    tabElement.id = tabName;
+
+    const MONGO_METHODS = [
+      'aggregate',
+      'bulkWrite',
+      'countDocuments',
+      'createIndex',
+      'createIndexes',
+      'deleteMany',
+      'deleteOne',
+      'distinct',
+      'drop',
+      'dropIndex',
+      'dropIndexes',
+      'estimatedDocumentCount',
+      'find',
+      'findOne',
+      'findOneAndDelete',
+      'findOneAndReplace',
+      'findOneAndUpdate',
+      'geoHaystackSearch',
+      'indexes',
+      'indexExists',
+      'indexInformation',
+      'insertMany',
+      'insertOne',
+      'isCapped',
+      'listIndexes',
+      'mapReduce',
+      'options',
+      'parallelCollectionScan',
+      'reIndex',
+      'rename',
+      'replaceOne',
+      'stats',
+      'updateMany',
+      'updateOne',
+      'watch',
+    ];
+
+    tabElement.innerHTML = `
+      <form>
+        <label>URL: <input type="text" name="url" value="${tab.url}" required></label>
+        <label>Method:
+          <select name="method" required>
+            ${MONGO_METHODS.map(a => `
+              <option value="${a}" ${tab.method === a ? 'selected' : ''}>${a}</option>`)}
+          </select>
+        </label>
+        <label>Collection name:
+          <select name="collection" required>
+            ${tab.collections.map(col => `
+              <option value="${col.name}"
+                ${tab.collection === col.name ? 'selected' : ''}>
+                  ${col.name}
+              </option>
+            `).join('')}
+          </select>
+        </label>
+      </form>
+      <section class="work-area">
+        <section class="left">
+          <h2>Query to execute:</h2>
+          <section>
+            <textarea name="data" class="data hideText" autocomplete="off"
+              autocorrect="off" autocapitalize="off" spellcheck="false">${tab.data}</textarea>
+            <pre class="textarea-highlight"></pre>
+          </section>
+          <aside class="error"></aside>
+        </section>
+        <section class="right">
+          <h2>Response:</h2>
+          <pre class="response"></pre>
+        </section>
+        <div class="execute" title="Execute">
+          <span class="play">&#x25B6;</span>
+          <span class="loader hide"></span>
+        </div>
+      </section>
+    `;
+
+    // Add to page
+    document.querySelector('#tab-container').appendChild(tabElement);
+
+    /**
+     * Quick references for tab elements
+     */
+    const urlInput = document.querySelector(`#${tabName} form [name="url"]`);
+    const methodInput = document.querySelector(`#${tabName} form [name="method"]`);
+    const collectionInput = document.querySelector(`#${tabName} form [name="collection"]`);
+    const textarea = document.querySelector(`#${tabName} textarea`);
+    const submit = document.querySelector(`#${tabName} .execute`);
+    const prettySection = document.querySelector(`#${tabName} .textarea-highlight`);
+
+    /**
+     * Web worker used for syntax highlighting
+     */
+    const worker = new Worker('worker.js');
+    worker.onmessage = (event) => { prettySection.innerHTML = event.data; };
+    worker.postMessage(textarea.value);
+
+    /**
+     * Events
+     */
+
+    // Keep persistent state
+    urlInput.addEventListener('blur', keepState(tabName));
+    methodInput.addEventListener('blur', keepState(tabName));
+    collectionInput.addEventListener('blur', keepState(tabName));
+    textarea.addEventListener('blur', keepState(tabName));
+
+    // Check textarea for eval errors
+    textarea.addEventListener('keyup', checkTextareaForErrors(tabName));
+
+    // Help with tabs, indenting, and spacing
+    textarea.addEventListener('keydown', helpUserWriteQuery);
+
+    // Handle form submission
+    submit.addEventListener('click', submitForm(tabName));
+
+    // Update collections when URL is changed
+    urlInput.addEventListener('blur', queryCollections(tabName));
+
+    // Handle syntax highlighting for textarea
+    textarea.addEventListener('keydown', highlightTextarea(textarea, prettySection, worker));
+
+    return tab;
+  };
 
   /**
-   * Restore settings on load
+   * Restore settings and create tabs on load
    */
   window.addEventListener('load', () => {
-    let settings = localStorage.getItem('tab1');
+    let settings = localStorage.getItem('settings');
 
     if (settings) {
       settings = JSON.parse(settings);
+      tabs = new Map(settings.tabs);
 
-      // Populate collections
-      if (settings.collections && settings.collections instanceof Array) {
-        settings.collections.forEach((col) => {
-          const option = document.createElement('option');
-          option.value = col.name;
-          option.textContent = col.name;
-          collection.appendChild(option);
-        });
-      }
-
-      // Populate field values
-      url.value = settings.url;
-      method.value = settings.method;
-      collection.value = settings.collection;
-      textarea.value = settings.data;
-
-      // Syntax highlight textarea
-      worker.postMessage(textarea.value);
+      // For each tab
+      tabs.forEach((tab, tabName) => createTab(tab, tabName));
+    } else {
+      // Create a new tabs map and create first tab
+      tabs = new Map();
+      const tabName = `tab${tabs.size + 1}`;
+      tabs.set(tabName, createTab({}, tabName));
     }
   });
 })(window);

@@ -10,71 +10,7 @@
   <body>
     <main>
       <h1>Mongo Playground</h1>
-      <form id="form">
-        <label>URL: <input type="text" name="url" required></label>
-        <label>Method:
-          <select name="method" required>
-            <option value="aggregate">aggregate</option>
-            <option value="bulkWrite">bulkWrite</option>
-            <option value="countDocuments">countDocuments</option>
-            <option value="createIndex">createIndex</option>
-            <option value="createIndexes">createIndexes</option>
-            <option value="deleteMany">deleteMany</option>
-            <option value="deleteOne">deleteOne</option>
-            <option value="distinct">distinct</option>
-            <option value="drop">drop</option>
-            <option value="dropIndex">dropIndex</option>
-            <option value="dropIndexes">dropIndexes</option>
-            <option value="estimatedDocumentCount">estimatedDocumentCount</option>
-            <option value="find">find</option>
-            <option value="findOne">findOne</option>
-            <option value="findOneAndDelete">findOneAndDelete</option>
-            <option value="findOneAndReplace">findOneAndReplace</option>
-            <option value="findOneAndUpdate">findOneAndUpdate</option>
-            <option value="geoHaystackSearch">geoHaystackSearch</option>
-            <option value="indexes">indexes</option>
-            <option value="indexExists">indexExists</option>
-            <option value="indexInformation">indexInformation</option>
-            <option value="insertMany">insertMany</option>
-            <option value="insertOne">insertOne</option>
-            <option value="isCapped">isCapped</option>
-            <option value="listIndexes">listIndexes</option>
-            <option value="mapReduce">mapReduce</option>
-            <option value="options">options</option>
-            <option value="parallelCollectionScan">parallelCollectionScan</option>
-            <option value="reIndex">reIndex</option>
-            <option value="rename">rename</option>
-            <option value="replaceOne">replaceOne</option>
-            <option value="stats">stats</option>
-            <option value="updateMany">updateMany</option>
-            <option value="updateOne">updateOne</option>
-            <option value="watch">watch</option>
-          </select>
-        </label>
-        <label>Collection name:
-          <select name="collection" required>
-          </select>
-        </label>
-      </form>
-      <section id="work-area">
-        <section id="left">
-          <h2>Query to execute:</h2>
-          <section>
-            <textarea name="data" id="data" class="hideText" autocomplete="off"
-              autocorrect="off" autocapitalize="off" spellcheck="false"></textarea>
-            <pre id="textarea-highlight"></pre>
-          </section>
-          <aside class="error"></aside>
-        </section>
-        <section id="right">
-          <h2>Response:</h2>
-          <pre id="response"></pre>
-        </section>
-        <div id="execute" title="Execute">
-          <span class="play">&#x25B6;</span>
-          <span id="loader" class="hide"></span>
-        </div>
-      </section>
+      <section id="tab-container"></section>
     </main>
 
     <script type="text/javascript" src="highlight.pack.js"></script>

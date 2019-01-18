@@ -12,6 +12,17 @@ main {
   display: flex;
   flex-direction: column;
 }
+
+#tab-container {
+  display: flex;
+  flex: 1;
+}
+section.tab {
+  display: flex;
+  flex: 1;
+  flex-direction: column;
+}
+
 h1 { text-indent: 2rem; }
 
 /* Disable chrome autofill input field coloring */
@@ -47,11 +58,11 @@ form input, form select {
   flex: 1;
   margin: 0 20px;
 }
-#work-area {
+.work-area {
   display: flex;
   flex: 1;
 }
-#work-area > section {
+.work-area > section {
   flex: 1;
   display: flex;
   flex-direction: column;
@@ -61,12 +72,12 @@ form input, form select {
 }
 
 /* Left side */
-#left > section {
+.left > section {
   display: flex;
   flex-grow: 1;
   position: relative;
 }
-#work-area textarea {
+.work-area textarea {
   flex: 1;
   padding: 1rem;
   background: rgb(23, 43, 58);
@@ -75,19 +86,19 @@ form input, form select {
   font-size: 16px;
   border: none;
 }
-#work-area textarea.hideText {
+.work-area textarea.hideText {
   text-shadow: 0px 0px 0px rgba(0, 0, 0, 0);
   text-fill-color: transparent;
   -webkit-text-fill-color: transparent;
 }
-#textarea-highlight {
+.textarea-highlight {
   position: absolute;
   height: auto;
   pointer-events: none;
   background: none;
 }
 
-#execute {
+.execute {
   position: absolute;
   left: 50%;
   margin-left: -40px;
@@ -100,12 +111,12 @@ form input, form select {
   font-size: 40px;
   cursor: pointer;
 }
-#execute > .play {
+.execute > .play {
   margin-left: 20px;
   position: relative;
   top: 2px;
 }
-#loader {
+.loader {
   display: inline-block;
   width: 45px;
   height: 45px;
