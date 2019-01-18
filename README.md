@@ -34,3 +34,23 @@ This product is not safe to use in any production capacity.  There is no input
 validation or sanitation whatsoever, nor are there any CORS or other security
 checks performed.  Do not integrate this into your product.  This is strictly
 to aid in development.
+
+## Release Notes
+
+### v1.2.0
+
+* Added basic error checking to textarea
+* Added syntax highlighting to textarea
+* Persistently store collection names and field values in local storage
+
+### v1.1.0
+
+* Fixed bug preventing copy from textarea
+* Added loader icon
+* Collections field now auto populates with alphabetized list of all collections in database
+* Fixed JSON encoding issues server-side
+* Methods list now contains proper, non-deprecated methods
+
+### v1.0.0
+
+* Initial Release
