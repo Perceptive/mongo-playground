@@ -1,7 +1,8 @@
 {
   "env": {
     "browser": true,
-    "node": true
+    "node": true,
+    "worker": true
   },
   "extends": ["eslint-config-airbnb"]
 }

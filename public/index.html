@@ -5,6 +5,7 @@
     <title>Mongo Playground</title>
     <link href="https://fonts.googleapis.com/css?family=Oswald|Ubuntu+Mono" rel="stylesheet">
     <link href="styles.css" rel="stylesheet">
+    <link rel="stylesheet" href="atom-one-dark.css">
   </head>
   <body>
     <main>
@@ -58,7 +59,11 @@
       <section id="work-area">
         <section id="left">
           <h2>Query to execute:</h2>
-          <textarea name="data" id="data" autocomplete="off" autocorrect="off" autocapitalize="off" spellcheck="false"></textarea>
+          <section>
+            <textarea name="data" id="data" class="hideText" autocomplete="off"
+              autocorrect="off" autocapitalize="off" spellcheck="false"></textarea>
+            <pre id="textarea-highlight"></pre>
+          </section>
           <aside class="error"></aside>
         </section>
         <section id="right">
@@ -72,6 +77,7 @@
       </section>
     </main>
 
+    <script type="text/javascript" src="highlight.pack.js"></script>
     <script type="text/javascript" src="logic.js"></script>
   </body>
 </html>

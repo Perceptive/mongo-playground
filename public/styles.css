@@ -59,8 +59,15 @@ form input, form select {
   overflow: auto;
   background: rgb(15, 32, 45);
 }
+
+/* Left side */
+#left > section {
+  display: flex;
+  flex-grow: 1;
+  position: relative;
+}
 #work-area textarea {
-  height: 100%;
+  flex: 1;
   padding: 1rem;
   background: rgb(23, 43, 58);
   color: rgba(255, 255, 255, 0.6);
@@ -68,16 +75,28 @@ form input, form select {
   font-size: 16px;
   border: none;
 }
+#work-area textarea.hideText {
+  text-shadow: 0px 0px 0px rgba(0, 0, 0, 0);
+  text-fill-color: transparent;
+  -webkit-text-fill-color: transparent;
+}
+#textarea-highlight {
+  position: absolute;
+  height: auto;
+  pointer-events: none;
+  background: none;
+}
+
 #execute {
   position: absolute;
   left: 50%;
-  margin-left: -36px;
+  margin-left: -40px;
   border-radius: 50px;
   height: 70px;
   width: 70px;
   margin-top: 10rem;
-  background: rgb(39, 174, 96);
-  border: 5px solid rgb(9, 20, 28);
+  background: rgb(9, 20, 28);
+  border: 5px solid rgb(15, 32, 45);
   font-size: 40px;
   cursor: pointer;
 }
@@ -115,11 +134,10 @@ pre {
   background: rgb(23, 43, 58);
   overflow: auto;
 }
-.string { color: rgb(41, 185, 115); }
-.number { color: rgb(51, 147, 220); }
-.boolean { color: rgb(214, 66, 146); }
-.null { color: rgb(40, 130, 249); }
-.key { color: rgb(241, 143, 1); }
+.string { color: #98c379; }
+.number { color: #c678dd; }
+.boolean, .null { color: #56b6c2; }
+.key { color: #d19a66; }
 
 .hide { display: none !important; }
 

@@ -1,4 +1,6 @@
-(({ document, localStorage, XMLHttpRequest }) => {
+(({
+  document, localStorage, XMLHttpRequest, hljs,
+}) => {
   /**
    * Quick references for page elements
    */
@@ -7,6 +9,13 @@
   const collection = document.querySelector('#form [name="collection"]');
   const textarea = document.querySelector('textarea');
   const submit = document.querySelector('#execute');
+  const prettySection = document.querySelector('#textarea-highlight');
+
+  /**
+   * Web worker used for syntax highlighting
+   */
+  const worker = new Worker('worker.js');
+  worker.onmessage = (event) => { prettySection.innerHTML = event.data; };
 
   /**
    * Hold result in memory for pagination
@@ -38,6 +47,57 @@
       },
     );
   };
+
+  /**
+   * Interval used for making syntax highlighting feel smoother
+   */
+  let interval;
+
+  /**
+   * Syntax highlight textarea
+   * We actually accomplish this by syntax highlighting over the top
+   * of the textarea, but since the section containing the markup
+   * has a CSS pointer-events:none; property, the user is none the wiser
+   */
+  textarea.addEventListener('keydown', (event) => {
+    const keyCode = event.keyCode || event.which;
+
+    // Ignore certain key codes
+    if (keyCode === 16 // shift
+      || keyCode === 17 // control
+      || keyCode === 18 // option
+      || keyCode === 20 // caps lock
+      || keyCode === 37 // left arrow
+      || keyCode === 38 // up arrow
+      || keyCode === 39 // right arrow
+      || keyCode === 40 // down arrow
+      || keyCode === 91 // command/windows key
+      || keyCode === 93 // command/windows key (right side)
+    ) return;
+
+    // Reset interval to prevent duplicate executions
+    clearInterval(interval);
+
+    // Hide highlighting
+    prettySection.classList.add('hide');
+
+    // Show textarea text
+    textarea.classList.remove('hideText');
+
+    // Interval, even of zero, makes highlighting smooth
+    interval = setInterval(() => {
+      // Start highlight processing
+      worker.postMessage(textarea.value);
+
+      // Hide textarea text
+      textarea.classList.add('hideText');
+
+      // Show highlighting
+      prettySection.classList.remove('hide');
+
+      clearInterval(interval);
+    }, 0);
+  });
 
   /**
    * Query list of collections to aid user when user leaves the URL field
@@ -289,6 +349,9 @@
       method.value = settings.method;
       collection.value = settings.collection;
       textarea.value = settings.data;
+
+      // Syntax highlight textarea
+      worker.postMessage(textarea.value);
     }
   });
 })(window);
