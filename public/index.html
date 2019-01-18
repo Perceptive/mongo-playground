@@ -214,6 +214,15 @@
 
     <script>
       /**
+       * Quick references for page elements
+       */
+      const url = document.querySelector('#form [name="url"]');
+      const method = document.querySelector('#form [name="method"]');
+      const collection = document.querySelector('#form [name="collection"]');
+      const textarea = document.querySelector('textarea');
+      const submit = document.querySelector('#execute');
+
+      /**
        * Hold result in memory for pagination
        */
       let result;
@@ -243,7 +252,7 @@
       /**
        * Query list of collections to aid user when user leaves the URL field
        */
-      document.querySelector('#form [name="url"]').addEventListener('blur', (event) => {
+      url.addEventListener('blur', (event) => {
         let body = {
           url: event.target.value,
         }
@@ -260,24 +269,33 @@
         // Handle response
         xhr.addEventListener('readystatechange', function () {
           if (this.readyState === 4) {
-            const select = document.querySelector('#form select[name="collection"]');
+            let collections = this.response;
 
-            if (!this.response || !(this.response instanceof Array)) return;
+            if (!collections || !(collections instanceof Array)) return;
 
             // Sort the array by name
-            this.response.sort((first, second) => {
+            collections = collections.sort((first, second) => {
               const a = first.name.toUpperCase();
               const b = second.name.toUpperCase();
               if (a < b) return -1;
               return 1;
-            })
+            });
+
+            // Get settings
+            let settings = localStorage.getItem('tab1');
+            if (settings) settings = JSON.parse(settings);
+            else settings = {};
+
+            // Add to local storage
+            settings.collections = collections;
+            localStorage.setItem('tab1', JSON.stringify(settings));
             
             // Then populate select field
-            .forEach((col) => {
+            collections.forEach((col) => {
               const option = document.createElement('option');
               option.value = col.name;
               option.textContent = col.name;
-              select.appendChild(option);
+              collection.appendChild(option);
             });
           }
         });
@@ -288,7 +306,7 @@
       /**
        * Handle form submission
        */
-      document.querySelector('#execute').addEventListener('click', (event) => {
+      submit.addEventListener('click', (event) => {
         event.preventDefault();
 
         const form = document.querySelector('#form');
@@ -342,9 +360,9 @@
       });
     
       /**
-       * Enable tabs in textarea
+       * Help save user some time in textarea
        */
-      document.querySelector('textarea').addEventListener('keydown', (event) => {
+      textarea.addEventListener('keydown', (event) => {
         const keyCode = event.keyCode || event.which;
         const textarea = event.target;
 
@@ -418,7 +436,7 @@
       /**
        * Let user know if textarea code is malformed
        */
-      document.querySelector('textarea').addEventListener('keyup', (event) => {
+      textarea.addEventListener('keyup', (event) => {
         const error = document.querySelector('#left .error');
 
         try {
@@ -429,6 +447,55 @@
 
         // Reset error message
         error.innerHTML = '';
+      });
+    
+      /**
+       * Keep state with local storage
+       */
+      const keepState = (event) => {
+        const name = event.target.name;
+
+        // Get settings
+        let settings = localStorage.getItem('tab1');
+
+        if (!settings) settings = {};
+        else settings = JSON.parse(settings);
+
+        // Set item
+        settings[name] = event.target.value;
+        localStorage.setItem('tab1', JSON.stringify(settings));
+      };
+
+      url.addEventListener('blur', keepState);
+      method.addEventListener('blur', keepState);
+      collection.addEventListener('blur', keepState);
+      textarea.addEventListener('blur', keepState);
+
+      /**
+       * Restore settings on load
+       */
+      window.addEventListener('load', () => {
+        let settings = localStorage.getItem('tab1');
+
+        if (settings) {
+          settings = JSON.parse(settings);
+
+          // Populate collections
+          if (settings.collections && settings.collections instanceof Array) {
+            settings.collections.forEach((col) => {
+              const option = document.createElement('option');
+              option.value = col.name;
+              option.textContent = col.name;
+              collection.appendChild(option);
+            });
+          }
+
+          // Populate field values
+          url.value = settings.url;
+          method.value = settings.method;
+          collection.value = settings.collection;
+          textarea.value = settings.data;
+        }
       });
     </script>
   </body>
