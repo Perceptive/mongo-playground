@@ -15,7 +15,9 @@ themed from the GraphQL Playground, which was based upon GraphiQL.
 * Drop down lists all available methods
 * Auto-populates list of collections to query
 * Syntax highlighting and pretty printing of response data, including errors
-* Helpful auto-formatting in textarea
+* Helpful auto-formatting and syntax highlighting in textarea
+* Tabs for running multiple simultaneous queries
+* Use of local storage so you can leave, come back later, and continue where you left off
 * Nice interface 👍
 
 ## Using
@@ -36,6 +38,12 @@ checks performed.  Do not integrate this into your product.  This is strictly
 to aid in development.
 
 ## Release Notes
+
+### v1.3.0
+
+* Added tabs for running simultaneous queries
+* Fixed bug preventing object queries from properly evaluating
+* Added support for regular expressions in queries
 
 ### v1.2.0
 
