@@ -107,7 +107,6 @@ form input, form select {
   display: flex;
   flex-direction: column;
   padding: 0 1rem;
-  overflow: auto;
   background: rgb(15, 32, 45);
 }
 
@@ -133,9 +132,10 @@ form input, form select {
 }
 .textarea-highlight {
   position: absolute;
-  height: auto;
+  height: 96%; /* TODO: Probably problematic at various screen sizes */
   pointer-events: none;
   background: none;
+  white-space: pre-wrap; /* behave like a textarea */
 }
 
 .execute {

@@ -566,6 +566,12 @@
     // Handle syntax highlighting for textarea
     textarea.addEventListener('keydown', highlightTextarea(textarea, prettySection, worker));
 
+    // Synchronize scrolling between textarea and syntax highlighting section
+    textarea.addEventListener('scroll', (event) => {
+      prettySection.scrollTop = event.target.scrollTop;
+      prettySection.scrollLeft = event.target.scrollLeft;
+    });
+
     return tab;
   };
 
