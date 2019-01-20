@@ -29,7 +29,10 @@ app.post('/', async (req, res) => {
     console.error(e);
     return res.status(500).json(e);
   }
-console.log(data)
+
+  console.log('Processing Query:');
+  console.log(data);
+
   // Execute request
   try {
     let result = await db.collection(collection)[method](data || {});

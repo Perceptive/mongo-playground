@@ -115,16 +115,23 @@
     // value into JavaScript given that the value may not be proper
     // JSON and formatting a JavaScript object into proper JSON is
     // a huge pain.
-    // At the same time, eval ignores objects so wrap in array just for op
-    // eslint-disable-next-line no-eval
-    const data = eval(`[${document.querySelector(`#${tabName} textarea`).value}]`);
+    const query = document.querySelector(`#${tabName} textarea`).value;
+    let data;
+    try {
+      // At the same time, eval ignores objects so wrap in array just for op
+      // eslint-disable-next-line no-eval
+      data = eval(`[${query}]`);
+    } catch (e) {
+      // eslint-disable-next-line no-eval
+      data = eval(query);
+    }
 
     // Prepare body data
     let body = {
       url: form.url.value,
       method: form.method.value,
       collection: form.collection.value,
-      data: data[0],
+      data: data instanceof Array && data.length === 1 ? data[0] : data,
     };
 
     if (!body.url || !body.method || !body.collection) return;
