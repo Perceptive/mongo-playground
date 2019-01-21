@@ -116,14 +116,20 @@
     // JSON and formatting a JavaScript object into proper JSON is
     // a huge pain.
     const query = document.querySelector(`#${tabName} textarea`).value;
-    let data;
-    try {
-      // At the same time, eval ignores objects so wrap in array just for op
-      // eslint-disable-next-line no-eval
-      data = eval(`[${query}]`);
-    } catch (e) {
-      // eslint-disable-next-line no-eval
-      data = eval(query);
+    let data = '';
+    let hack = false;
+
+    // No need to eval an empty string
+    if (query) {
+      try {
+        // At the same time, eval ignores objects so wrap in array just for op
+        // eslint-disable-next-line no-eval
+        data = eval(`[${query}]`);
+        hack = true;
+      } catch (e) {
+        // eslint-disable-next-line no-eval
+        data = eval(query);
+      }
     }
 
     // Prepare body data
@@ -131,7 +137,7 @@
       url: form.url.value,
       method: form.method.value,
       collection: form.collection.value,
-      data: data instanceof Array && data.length === 1 ? data[0] : data,
+      data: hack ? data[0] : data,
     };
 
     if (!body.url || !body.method || !body.collection) return;
