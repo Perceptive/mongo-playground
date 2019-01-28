@@ -39,6 +39,13 @@ to aid in development.
 
 ## Release Notes
 
+### v1.4.0
+
+* Added pagination (Issue #1)
+* Added options (Issue #4)
+* Added eval preview (Issue #3)
+* Fixed textarea paste bug (Issue #2)
+
 ### v1.3.0
 
 * Added tabs for running simultaneous queries
