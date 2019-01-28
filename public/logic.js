@@ -2,6 +2,13 @@
   document, localStorage, XMLHttpRequest,
 }) => {
   /**
+   * Number of results per page
+   * @constant
+   * @type {number}
+   */
+  const PAGE_SIZE = 10;
+
+  /**
    * Support for serializing regular expressions to JSON
    */
   // eslint-disable-next-line no-extend-native
@@ -18,11 +25,6 @@
    * @type {Map}
    */
   let tabs;
-
-  /**
-   * Hold result in memory for pagination
-   */
-  let result;
 
   /**
    * Syntax highlight JSON
@@ -166,10 +168,41 @@
         loader.classList.add('hide');
         play.classList.remove('hide');
 
-        result = this.response;
+        const result = this.response;
 
-        if (result && result instanceof Array) {
-          response.innerHTML = syntaxHighlight(result.slice(0, 10));
+        if (result && result instanceof Array && result.length > PAGE_SIZE) {
+          // Create pagination slider
+          const slider = document.createElement('input');
+          slider.type = 'range';
+          slider.step = PAGE_SIZE;
+          slider.min = 0;
+          slider.max = result.length;
+          slider.classList.add('slider');
+
+          // Let user know about selected value
+          const output = document.createElement('output');
+          slider.addEventListener('input', () => {
+            const start = Number(slider.value);
+            const end = Math.min(start + PAGE_SIZE, result.length);
+            output.textContent = `Showing results ${start} to ${end}`;
+          });
+          output.textContent = `Showing results 1 to ${Math.min(PAGE_SIZE, result.length)}`;
+
+          // Enable changing results
+          slider.addEventListener('change', () => {
+            const start = Number(slider.value);
+            const end = Math.min(start + PAGE_SIZE, result.length);
+            response.innerHTML = syntaxHighlight(result.slice(start, end));
+          });
+
+          // Add to page
+          const pagination = form.parentElement.querySelector('.pagination');
+          pagination.innerHTML = '';
+          pagination.appendChild(slider);
+          pagination.appendChild(output);
+
+          // Set initial response HTML
+          response.innerHTML = syntaxHighlight(result.slice(0, PAGE_SIZE));
         } else response.innerHTML = syntaxHighlight(result);
       }
     });
@@ -525,6 +558,7 @@
         </section>
         <section class="right">
           <h2>Response:</h2>
+          <div class="pagination"></div>
           <pre class="response"></pre>
         </section>
         <div class="execute" title="Execute">
