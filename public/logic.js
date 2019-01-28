@@ -171,38 +171,107 @@
         const result = this.response;
 
         if (result && result instanceof Array && result.length > PAGE_SIZE) {
-          // Create pagination slider
-          const slider = document.createElement('input');
-          slider.type = 'range';
-          slider.step = PAGE_SIZE;
-          slider.min = 0;
-          slider.max = result.length;
-          slider.classList.add('slider');
-
-          // Let user know about selected value
-          const output = document.createElement('output');
-          slider.addEventListener('input', () => {
-            const start = Number(slider.value);
-            const end = Math.min(start + PAGE_SIZE, result.length);
-            output.textContent = `Showing results ${start} to ${end}`;
-          });
-          output.textContent = `Showing results 1 to ${Math.min(PAGE_SIZE, result.length)}`;
-
-          // Enable changing results
-          slider.addEventListener('change', () => {
-            const start = Number(slider.value);
-            const end = Math.min(start + PAGE_SIZE, result.length);
-            response.innerHTML = syntaxHighlight(result.slice(start, end));
-          });
-
-          // Add to page
           const pagination = form.parentElement.querySelector('.pagination');
-          pagination.innerHTML = '';
-          pagination.appendChild(slider);
-          pagination.appendChild(output);
+          let updateView;
 
-          // Set initial response HTML
-          response.innerHTML = syntaxHighlight(result.slice(0, PAGE_SIZE));
+          let pageSize = PAGE_SIZE;
+
+          // Update response text
+          const changeResults = (start = 0, e) => {
+            const end = e || Math.min(Number(start) + pageSize, result.length);
+            response.innerHTML = syntaxHighlight(result.slice(start, end));
+          };
+
+          // Create pagination slider
+          const createSlider = (useSlider = true) => {
+            // Let user know about selected value
+            const output = document.createElement('output');
+            output.textContent = `Showing results 1 to ${useSlider ? Math.min(pageSize, result.length) : result.length}`;
+            pagination.appendChild(output);
+
+            // If there requests a slider
+            if (useSlider) {
+              const slider = document.createElement('input');
+              slider.type = 'range';
+              slider.step = pageSize;
+              slider.min = 0;
+              slider.max = result.length;
+              slider.classList.add('slider');
+
+              slider.addEventListener('input', () => {
+                const start = Number(slider.value);
+                const end = Math.min(start + pageSize, result.length);
+                output.textContent = `Showing results ${start} to ${end}`;
+              });
+
+              // Enable changing results
+              slider.addEventListener('change', ({ target }) => changeResults(target.value));
+
+              // Add to page
+              pagination.appendChild(slider);
+            }
+          };
+
+          // Create view some/all buttons
+          const createViewButtons = () => {
+            const view = document.createElement('aside');
+            view.classList.add('view-settings');
+            view.innerHTML = `
+              <label>
+                <input type="radio" name="view-settings" value="view-some">
+                View <input type="number" min="0" max="${result.length}"
+                  value="${pageSize}" step="${pageSize}">
+              </label>
+              <label>
+                <input type="radio" name="view-settings" value="view-all">
+                View All
+              </label>
+            `;
+
+            // Monitor radio selection
+            view.querySelectorAll('input[type="radio"]').forEach(radio => radio
+              .addEventListener('change', ({ target }) => {
+                switch (target.value) {
+                  case 'view-some':
+                    pageSize = Number(target.parentElement
+                      .querySelector('input[type="number"]').value);
+                    updateView();
+                    break;
+                  case 'view-all':
+                    updateView(false, true); // don't include slider
+                    break;
+                  default:
+                }
+              }));
+
+            // Monitor page size change
+            view.querySelector('input[type="number"]').addEventListener('change', ({ target }) => {
+              pageSize = Number(target.value);
+
+              // Update view
+              updateView();
+            });
+
+            // Add to page
+            pagination.appendChild(view);
+          };
+
+          // Update view
+          updateView = (useSlider = true, viewAll = false) => {
+            // Clear view
+            pagination.innerHTML = '';
+
+            // Add items to page
+            createSlider(useSlider);
+            createViewButtons();
+
+            // Set response HTML
+            if (viewAll) changeResults(0, result.length);
+            else changeResults();
+          };
+
+          // Setup view
+          updateView();
         } else response.innerHTML = syntaxHighlight(result);
       }
     });

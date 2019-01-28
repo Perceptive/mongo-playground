@@ -180,27 +180,36 @@ form input, form select {
 }
 
 /* Right side */
+.pagination {
+  display: flex;
+}
+output {
+  margin-right: 1vw;
+  margin-bottom: 10px;
+  flex: 1;
+  max-width: 14vw;
+}
 .pagination > input::before {
   content: attr(min);
   margin: 0 5px;
   display: inline-block;
-  line-height: 27px;
+  line-height: 20px;
 }
 .pagination > input {
   margin: 0;
   padding: 0;
   border: 0;
+  flex: 1;
+  margin-bottom: 10px;
 }
 .pagination > input::after {
   content: attr(max);
   display: inline-block;
   margin: 0 5px;
-  line-height: 27px;
+  line-height: 20px;
 }
 input[type=range].slider {
   -webkit-appearance: none;
-  width: 100%;
-  margin: 0.7px 0;
 }
 input[type=range].slider:focus {
   outline: none;
@@ -283,11 +292,31 @@ input[type=range].slider:focus::-ms-fill-upper {
   background: #1e394c;
 }
 
-output {
+.view-settings {
   position: absolute;
-  display: inline-block;
-  right: 1vw;
   top: 25px;
+  right: 1vw;
+}
+.view-settings label:first-child {
+  border-radius: 5px 0 0 5px;
+  margin-right: 1px;
+}
+.view-settings label {
+  padding: 10px;
+  border-radius: 0 5px 5px 0;
+  background: rgb(9, 20, 28);
+  cursor: pointer;
+}
+.view-settings [name="view-settings"] {
+  -webkit-appearance: none;
+  border: 0;
+  padding: 0;
+  margin: 0;
+}
+.view-settings [type="number"] {
+  margin-left: 10px;
+  padding: 6px 0 6px 6px;
+  text-align: right;
 }
 
 pre {
