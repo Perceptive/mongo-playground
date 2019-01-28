@@ -578,6 +578,14 @@
 
     // Handle syntax highlighting for textarea
     textarea.addEventListener('keydown', highlightTextarea(textarea, prettySection, worker));
+    textarea.addEventListener('paste', (event) => {
+      // On paste, update syntax highlighting
+      highlightTextarea(textarea, prettySection, worker)(event);
+
+      // And synchronize scroll
+      prettySection.scrollTop = textarea.scrollTop;
+      prettySection.scrollLeft = textarea.scrollLeft;
+    });
 
     // Synchronize scrolling between textarea and syntax highlighting section
     textarea.addEventListener('scroll', (event) => {
