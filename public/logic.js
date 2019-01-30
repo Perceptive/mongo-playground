@@ -169,9 +169,9 @@
         play.classList.remove('hide');
 
         const result = this.response;
+        const pagination = form.parentElement.querySelector('.pagination');
 
         if (result && result instanceof Array && result.length > PAGE_SIZE) {
-          const pagination = form.parentElement.querySelector('.pagination');
           let updateView;
 
           let pageSize = PAGE_SIZE;
@@ -273,7 +273,10 @@
 
           // Setup view
           updateView();
-        } else response.innerHTML = syntaxHighlight(result);
+        } else {
+          pagination.innerHTML = '';
+          response.innerHTML = syntaxHighlight(result);
+        }
       }
     });
 
