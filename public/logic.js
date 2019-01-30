@@ -186,7 +186,7 @@
           const createSlider = (useSlider = true) => {
             // Let user know about selected value
             const output = document.createElement('output');
-            output.textContent = `Showing results 1 to ${useSlider ? Math.min(pageSize, result.length) : result.length}`;
+            output.textContent = `Showing results 0 to ${useSlider ? Math.min(pageSize, result.length) : result.length}`;
             pagination.appendChild(output);
 
             // If there requests a slider
@@ -195,6 +195,7 @@
               slider.type = 'range';
               slider.step = pageSize;
               slider.min = 0;
+              slider.value = 0;
               slider.max = result.length;
               slider.classList.add('slider');
 
