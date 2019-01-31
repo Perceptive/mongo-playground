@@ -360,6 +360,7 @@ pre {
 .additional-options > ul.tabs > li {
   display: inline-block;
   cursor: pointer;
+  margin-right: 1vw;
 }
 .additional-options > section {
   height: 0;
@@ -375,6 +376,9 @@ pre {
   height: 0;
   padding: 0;
 }
-.additional-options .active .textarea-highlight {
+.additional-options .active pre {
   height: auto;
+}
+.additional-options .view-eval pre {
+  width: 100%;
 }
