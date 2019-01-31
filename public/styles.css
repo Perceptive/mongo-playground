@@ -348,3 +348,24 @@ pre {
   display: inline-block;
   margin: 10px;
 }
+
+.additional-options {
+  background: rgb(9, 20, 28);
+  position: relative;
+}
+.additional-options > ul.tabs {
+  list-style: none;
+  padding: 0 1vw;
+}
+.additional-options > ul.tabs > li {
+  display: inline-block;
+  cursor: pointer;
+}
+.additional-options > section {
+  height: 0;
+  transition: height .15s ease-in-out;
+  will-change: height;
+}
+.additional-options > section.active {
+  height: 50vh;
+}

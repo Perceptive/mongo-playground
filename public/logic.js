@@ -639,6 +639,12 @@
           <span class="loader hide"></span>
         </div>
       </section>
+      <aside class="additional-options">
+        <ul class="tabs">
+          <li data-for="options">Mongo Options</li>
+        </ul>
+        <section class="options">test</section>
+      </aside>
     `;
 
     // Add to page
@@ -653,6 +659,7 @@
     const textarea = document.querySelector(`#${tabName} textarea`);
     const submit = document.querySelector(`#${tabName} .execute`);
     const prettySection = document.querySelector(`#${tabName} .textarea-highlight`);
+    const options = document.querySelector(`#${tabName} .additional-options`);
 
     /**
      * Web worker used for syntax highlighting
@@ -699,6 +706,20 @@
       prettySection.scrollTop = event.target.scrollTop;
       prettySection.scrollLeft = event.target.scrollLeft;
     });
+
+    // Enable additional options to open and close
+    options.querySelectorAll('ul.tabs > li').forEach(li => li
+      .addEventListener('click', () => {
+        const section = options.querySelector(`section.${li.dataset.for}`)
+        const open = section.classList.contains('active');
+
+        // Remove active class from all sections
+        options.querySelectorAll('section.active').forEach(s => s.classList.remove('active'));
+
+        // Add active class to this section
+        if (open) section.classList.remove('active');
+        else section.classList.add('active');
+      }));
 
     return tab;
   };
