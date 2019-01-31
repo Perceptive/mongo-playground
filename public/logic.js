@@ -2,6 +2,13 @@
   document, localStorage, XMLHttpRequest,
 }) => {
   /**
+   * Number of results per page
+   * @constant
+   * @type {number}
+   */
+  const PAGE_SIZE = 10;
+
+  /**
    * Support for serializing regular expressions to JSON
    */
   // eslint-disable-next-line no-extend-native
@@ -18,11 +25,6 @@
    * @type {Map}
    */
   let tabs;
-
-  /**
-   * Hold result in memory for pagination
-   */
-  let result;
 
   /**
    * Syntax highlight JSON
@@ -166,11 +168,115 @@
         loader.classList.add('hide');
         play.classList.remove('hide');
 
-        result = this.response;
+        const result = this.response;
+        const pagination = form.parentElement.querySelector('.pagination');
 
-        if (result && result instanceof Array) {
-          response.innerHTML = syntaxHighlight(result.slice(0, 10));
-        } else response.innerHTML = syntaxHighlight(result);
+        if (result && result instanceof Array && result.length > PAGE_SIZE) {
+          let updateView;
+
+          let pageSize = PAGE_SIZE;
+
+          // Update response text
+          const changeResults = (start = 0, e) => {
+            const end = e || Math.min(Number(start) + pageSize, result.length);
+            response.innerHTML = syntaxHighlight(result.slice(start, end));
+          };
+
+          // Create pagination slider
+          const createSlider = (useSlider = true) => {
+            // Let user know about selected value
+            const output = document.createElement('output');
+            output.textContent = `Showing results 0 to ${useSlider ? Math.min(pageSize, result.length) : result.length}`;
+            pagination.appendChild(output);
+
+            // If there requests a slider
+            if (useSlider) {
+              const slider = document.createElement('input');
+              slider.type = 'range';
+              slider.step = pageSize;
+              slider.min = 0;
+              slider.value = 0;
+              slider.max = result.length;
+              slider.classList.add('slider');
+
+              slider.addEventListener('input', () => {
+                const start = Number(slider.value);
+                const end = Math.min(start + pageSize, result.length);
+                output.textContent = `Showing results ${start} to ${end}`;
+              });
+
+              // Enable changing results
+              slider.addEventListener('change', ({ target }) => changeResults(target.value));
+
+              // Add to page
+              pagination.appendChild(slider);
+            }
+          };
+
+          // Create view some/all buttons
+          const createViewButtons = () => {
+            const view = document.createElement('aside');
+            view.classList.add('view-settings');
+            view.innerHTML = `
+              <label>
+                <input type="radio" name="view-settings" value="view-some">
+                View <input type="number" min="0" max="${result.length}"
+                  value="${pageSize}" step="${pageSize}">
+              </label>
+              <label>
+                <input type="radio" name="view-settings" value="view-all">
+                View All
+              </label>
+            `;
+
+            // Monitor radio selection
+            view.querySelectorAll('input[type="radio"]').forEach(radio => radio
+              .addEventListener('change', ({ target }) => {
+                switch (target.value) {
+                  case 'view-some':
+                    pageSize = Number(target.parentElement
+                      .querySelector('input[type="number"]').value);
+                    updateView();
+                    break;
+                  case 'view-all':
+                    updateView(false, true); // don't include slider
+                    break;
+                  default:
+                }
+              }));
+
+            // Monitor page size change
+            view.querySelector('input[type="number"]').addEventListener('change', ({ target }) => {
+              pageSize = Number(target.value);
+
+              // Update view
+              updateView();
+            });
+
+            // Add to page
+            pagination.appendChild(view);
+          };
+
+          // Update view
+          updateView = (useSlider = true, viewAll = false) => {
+            // Clear view
+            pagination.innerHTML = '';
+
+            // Add items to page
+            createSlider(useSlider);
+            createViewButtons();
+
+            // Set response HTML
+            if (viewAll) changeResults(0, result.length);
+            else changeResults();
+          };
+
+          // Setup view
+          updateView();
+        } else {
+          pagination.innerHTML = '';
+          response.innerHTML = syntaxHighlight(result);
+        }
       }
     });
 
@@ -525,6 +631,7 @@
         </section>
         <section class="right">
           <h2>Response:</h2>
+          <div class="pagination"></div>
           <pre class="response"></pre>
         </section>
         <div class="execute" title="Execute">
