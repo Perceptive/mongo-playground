@@ -2,6 +2,13 @@
   document, localStorage, XMLHttpRequest,
 }) => {
   /**
+   * Number of results per page
+   * @constant
+   * @type {number}
+   */
+  const PAGE_SIZE = 10;
+
+  /**
    * Support for serializing regular expressions to JSON
    */
   // eslint-disable-next-line no-extend-native
@@ -18,11 +25,6 @@
    * @type {Map}
    */
   let tabs;
-
-  /**
-   * Hold result in memory for pagination
-   */
-  let result;
 
   /**
    * Syntax highlight JSON
@@ -132,12 +134,17 @@
       }
     }
 
+    // Get query options
+    // eslint-disable-next-line no-eval
+    const options = eval(`[${document.querySelector(`#${tabName} .options textarea`).value}]`);
+
     // Prepare body data
     let body = {
       url: form.url.value,
       method: form.method.value,
       collection: form.collection.value,
       data: hack ? data[0] : data,
+      options: options[0],
     };
 
     if (!body.url || !body.method || !body.collection) return;
@@ -166,11 +173,115 @@
         loader.classList.add('hide');
         play.classList.remove('hide');
 
-        result = this.response;
+        const result = this.response;
+        const pagination = form.parentElement.querySelector('.pagination');
 
-        if (result && result instanceof Array) {
-          response.innerHTML = syntaxHighlight(result.slice(0, 10));
-        } else response.innerHTML = syntaxHighlight(result);
+        if (result && result instanceof Array && result.length > PAGE_SIZE) {
+          let updateView;
+
+          let pageSize = PAGE_SIZE;
+
+          // Update response text
+          const changeResults = (start = 0, e) => {
+            const end = e || Math.min(Number(start) + pageSize, result.length);
+            response.innerHTML = syntaxHighlight(result.slice(start, end));
+          };
+
+          // Create pagination slider
+          const createSlider = (useSlider = true) => {
+            // Let user know about selected value
+            const output = document.createElement('output');
+            output.textContent = `Showing results 0 to ${useSlider ? Math.min(pageSize, result.length) : result.length}`;
+            pagination.appendChild(output);
+
+            // If there requests a slider
+            if (useSlider) {
+              const slider = document.createElement('input');
+              slider.type = 'range';
+              slider.step = pageSize;
+              slider.min = 0;
+              slider.value = 0;
+              slider.max = result.length;
+              slider.classList.add('slider');
+
+              slider.addEventListener('input', () => {
+                const start = Number(slider.value);
+                const end = Math.min(start + pageSize, result.length);
+                output.textContent = `Showing results ${start} to ${end}`;
+              });
+
+              // Enable changing results
+              slider.addEventListener('change', ({ target }) => changeResults(target.value));
+
+              // Add to page
+              pagination.appendChild(slider);
+            }
+          };
+
+          // Create view some/all buttons
+          const createViewButtons = () => {
+            const view = document.createElement('aside');
+            view.classList.add('view-settings');
+            view.innerHTML = `
+              <label>
+                <input type="radio" name="view-settings" value="view-some">
+                View <input type="number" min="0" max="${result.length}"
+                  value="${pageSize}" step="${pageSize}">
+              </label>
+              <label>
+                <input type="radio" name="view-settings" value="view-all">
+                View All
+              </label>
+            `;
+
+            // Monitor radio selection
+            view.querySelectorAll('input[type="radio"]').forEach(radio => radio
+              .addEventListener('change', ({ target }) => {
+                switch (target.value) {
+                  case 'view-some':
+                    pageSize = Number(target.parentElement
+                      .querySelector('input[type="number"]').value);
+                    updateView();
+                    break;
+                  case 'view-all':
+                    updateView(false, true); // don't include slider
+                    break;
+                  default:
+                }
+              }));
+
+            // Monitor page size change
+            view.querySelector('input[type="number"]').addEventListener('change', ({ target }) => {
+              pageSize = Number(target.value);
+
+              // Update view
+              updateView();
+            });
+
+            // Add to page
+            pagination.appendChild(view);
+          };
+
+          // Update view
+          updateView = (useSlider = true, viewAll = false) => {
+            // Clear view
+            pagination.innerHTML = '';
+
+            // Add items to page
+            createSlider(useSlider);
+            createViewButtons();
+
+            // Set response HTML
+            if (viewAll) changeResults(0, result.length);
+            else changeResults();
+          };
+
+          // Setup view
+          updateView();
+        } else {
+          pagination.innerHTML = '';
+          response.innerHTML = syntaxHighlight(result);
+        }
       }
     });
 
@@ -256,14 +367,15 @@
    * Let user know if textarea code is malformed
    * @param {Event} event
    */
-  const checkTextareaForErrors = tabName => (event) => {
-    const error = document.querySelector(`#${tabName} .left .error`);
+  const checkTextareaForErrors = ({ target }) => {
+    const error = target.parentElement.parentElement
+      .querySelector('.error');
 
     try {
       // We are deliberately using eval here since it does all the heavy
       // lifting for us; why build a custom parser when there is one built-in?
       // eslint-disable-next-line no-eval
-      eval(event.target.value);
+      eval(target.value);
     } catch (e) {
       error.innerHTML = `<span class="error-circle">X</span>${e.message}`;
       return;
@@ -431,6 +543,7 @@
       collections: [],
       collection: '',
       data: '',
+      options: '',
       ...settings,
     };
 
@@ -525,6 +638,7 @@
         </section>
         <section class="right">
           <h2>Response:</h2>
+          <div class="pagination"></div>
           <pre class="response"></pre>
         </section>
         <div class="execute" title="Execute">
@@ -532,6 +646,21 @@
           <span class="loader hide"></span>
         </div>
       </section>
+      <aside class="additional-options">
+        <ul class="tabs">
+          <li data-for="options">Mongo Options</li>
+          <li data-for="view-eval">Preview Request</li>
+        </ul>
+        <section class="options">
+          <textarea name="options" class="hideText" autocomplete="off"
+            autocorrect="off" autocapitalize="off" spellcheck="false">${tab.options}</textarea>
+          <pre class="textarea-highlight"></pre>
+        </section>
+        <section class="view-eval">
+          <pre></pre>
+        </section>
+        <aside class="error"></aside>
+      </aside>
     `;
 
     // Add to page
@@ -543,16 +672,49 @@
     const urlInput = document.querySelector(`#${tabName} form [name="url"]`);
     const methodInput = document.querySelector(`#${tabName} form [name="method"]`);
     const collectionInput = document.querySelector(`#${tabName} form [name="collection"]`);
-    const textarea = document.querySelector(`#${tabName} textarea`);
+    const textareas = document.querySelectorAll(`#${tabName} textarea`);
     const submit = document.querySelector(`#${tabName} .execute`);
-    const prettySection = document.querySelector(`#${tabName} .textarea-highlight`);
+    const options = document.querySelector(`#${tabName} .additional-options`);
 
     /**
-     * Web worker used for syntax highlighting
+     * Textarea helpers
      */
-    const worker = new Worker('worker.js');
-    worker.onmessage = (event) => { prettySection.innerHTML = event.data; };
-    worker.postMessage(textarea.value);
+    textareas.forEach((textarea) => {
+      const prettySection = textarea.parentElement.querySelector('.textarea-highlight');
+
+      /**
+       * Web worker used for syntax highlighting
+       */
+      const worker = new Worker('worker.js');
+      worker.onmessage = (event) => { prettySection.innerHTML = event.data; };
+      worker.postMessage(textarea.value);
+
+      // Keep persistent state
+      textarea.addEventListener('blur', keepState(tabName));
+
+      // Check textarea for eval errors
+      textarea.addEventListener('keyup', checkTextareaForErrors);
+
+      // Help with tabs, indenting, and spacing
+      textarea.addEventListener('keydown', helpUserWriteQuery);
+
+      // Handle syntax highlighting for textarea
+      textarea.addEventListener('keydown', highlightTextarea(textarea, prettySection, worker));
+      textarea.addEventListener('paste', (event) => {
+        // On paste, update syntax highlighting
+        highlightTextarea(textarea, prettySection, worker)(event);
+
+        // And synchronize scroll
+        prettySection.scrollTop = textarea.scrollTop;
+        prettySection.scrollLeft = textarea.scrollLeft;
+      });
+
+      // Synchronize scrolling between textarea and syntax highlighting section
+      textarea.addEventListener('scroll', (event) => {
+        prettySection.scrollTop = event.target.scrollTop;
+        prettySection.scrollLeft = event.target.scrollLeft;
+      });
+    });
 
     /**
      * Events
@@ -562,13 +724,6 @@
     urlInput.addEventListener('blur', keepState(tabName));
     methodInput.addEventListener('change', keepState(tabName));
     collectionInput.addEventListener('change', keepState(tabName));
-    textarea.addEventListener('blur', keepState(tabName));
-
-    // Check textarea for eval errors
-    textarea.addEventListener('keyup', checkTextareaForErrors(tabName));
-
-    // Help with tabs, indenting, and spacing
-    textarea.addEventListener('keydown', helpUserWriteQuery);
 
     // Handle form submission
     submit.addEventListener('click', submitForm(tabName));
@@ -576,13 +731,54 @@
     // Update collections when URL is changed
     urlInput.addEventListener('blur', queryCollections(tabName));
 
-    // Handle syntax highlighting for textarea
-    textarea.addEventListener('keydown', highlightTextarea(textarea, prettySection, worker));
+    // Enable additional options to open and close
+    options.querySelectorAll('ul.tabs > li').forEach(li => li
+      .addEventListener('click', () => {
+        const section = options.querySelector(`section.${li.dataset.for}`);
+        const open = section.classList.contains('active');
 
-    // Synchronize scrolling between textarea and syntax highlighting section
-    textarea.addEventListener('scroll', (event) => {
-      prettySection.scrollTop = event.target.scrollTop;
-      prettySection.scrollLeft = event.target.scrollLeft;
+        // Remove active class from all sections
+        options.querySelectorAll('section.active').forEach(s => s.classList.remove('active'));
+
+        // Add active class to this section
+        if (open) section.classList.remove('active');
+        else section.classList.add('active');
+      }));
+
+    // Handle previewing request
+    options.querySelector('[data-for="view-eval"]').addEventListener('click', () => {
+      const pre = options.querySelector('.view-eval pre');
+
+      // We use eval here since it's the only way to convert textarea
+      // value into JavaScript given that the value may not be proper
+      // JSON and formatting a JavaScript object into proper JSON is
+      // a huge pain.
+      const query = document.querySelector(`#${tabName} textarea`).value;
+      let data = '';
+      let hack = false;
+
+      // No need to eval an empty string
+      if (query) {
+        try {
+          // At the same time, eval ignores objects so wrap in array just for op
+          // eslint-disable-next-line no-eval
+          data = eval(`[${query}]`);
+          hack = true;
+        } catch (e) {
+          // eslint-disable-next-line no-eval
+          data = eval(query);
+        }
+      }
+      data = hack ? data[0] : data;
+
+      // Get query options
+      // eslint-disable-next-line no-eval
+      let opts = eval(`[${tab.options}]`);
+      [opts] = opts;
+
+      // Syntax highlight
+      pre.innerHTML = `db.collection(<span class="string">"${tab.collection}"</span>).${tab.method}(${
+        syntaxHighlight(data)}, ${syntaxHighlight(opts)});`;
     });
 
     return tab;

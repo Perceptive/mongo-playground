@@ -15,7 +15,7 @@ app.use(bodyParser.json());
 // Process mongo commands
 app.post('/', async (req, res) => {
   const {
-    url, method, collection, data,
+    url, method, collection, data, options,
   } = req.body;
 
   res.setHeader('Content-Type', 'application/json');
@@ -30,12 +30,16 @@ app.post('/', async (req, res) => {
     return res.status(500).json(e);
   }
 
-  console.log('Processing Query:');
+  console.log('\nProcessing Query:');
   console.log(data);
+
+  // Handle options
+  console.log('\nWith options:');
+  console.log(options);
 
   // Execute request
   try {
-    let result = await db.collection(collection)[method](data || {});
+    let result = await db.collection(collection)[method](data || {}, options);
 
     switch (method) {
       case 'aggregate':
