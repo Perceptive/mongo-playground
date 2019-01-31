@@ -649,11 +649,15 @@
       <aside class="additional-options">
         <ul class="tabs">
           <li data-for="options">Mongo Options</li>
+          <li data-for="view-eval">Preview Request</li>
         </ul>
         <section class="options">
           <textarea name="options" class="hideText" autocomplete="off"
             autocorrect="off" autocapitalize="off" spellcheck="false">${tab.options}</textarea>
           <pre class="textarea-highlight"></pre>
+        </section>
+        <section class="view-eval">
+          <pre></pre>
         </section>
         <aside class="error"></aside>
       </aside>
@@ -740,6 +744,42 @@
         if (open) section.classList.remove('active');
         else section.classList.add('active');
       }));
+
+    // Handle previewing request
+    options.querySelector('[data-for="view-eval"]').addEventListener('click', () => {
+      const pre = options.querySelector('.view-eval pre');
+
+      // We use eval here since it's the only way to convert textarea
+      // value into JavaScript given that the value may not be proper
+      // JSON and formatting a JavaScript object into proper JSON is
+      // a huge pain.
+      const query = document.querySelector(`#${tabName} textarea`).value;
+      let data = '';
+      let hack = false;
+
+      // No need to eval an empty string
+      if (query) {
+        try {
+          // At the same time, eval ignores objects so wrap in array just for op
+          // eslint-disable-next-line no-eval
+          data = eval(`[${query}]`);
+          hack = true;
+        } catch (e) {
+          // eslint-disable-next-line no-eval
+          data = eval(query);
+        }
+      }
+      data = hack ? data[0] : data;
+
+      // Get query options
+      // eslint-disable-next-line no-eval
+      let opts = eval(`[${tab.options}]`);
+      [opts] = opts;
+
+      // Syntax highlight
+      pre.innerHTML = `db.collection(<span class="string">"${tab.collection}"</span>).${tab.method}(${
+        syntaxHighlight(data)}, ${syntaxHighlight(opts)});`;
+    });
 
     return tab;
   };
