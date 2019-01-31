@@ -118,7 +118,7 @@ form input, form select {
   flex-grow: 1;
   position: relative;
 }
-.work-area textarea {
+textarea {
   flex: 1;
   padding: 1rem;
   background: rgb(23, 43, 58);
@@ -127,7 +127,7 @@ form input, form select {
   font-size: 16px;
   border: none;
 }
-.work-area textarea.hideText {
+textarea.hideText {
   text-shadow: 0px 0px 0px rgba(0, 0, 0, 0);
   text-fill-color: transparent;
   -webkit-text-fill-color: transparent;
@@ -364,8 +364,10 @@ pre {
 .additional-options > section {
   height: 0;
   transition: height .15s ease-in-out;
-  will-change: height;
+  will-change: height, margin;
+  display: flex;
 }
 .additional-options > section.active {
   height: 50vh;
+  margin: 1vh 1vw;
 }

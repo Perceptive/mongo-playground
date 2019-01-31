@@ -134,12 +134,17 @@
       }
     }
 
+    // Get query options
+    // eslint-disable-next-line no-eval
+    const options = eval(`[${document.querySelector(`#${tabName} .options textarea`).value}]`);
+
     // Prepare body data
     let body = {
       url: form.url.value,
       method: form.method.value,
       collection: form.collection.value,
       data: hack ? data[0] : data,
+      options: options[0],
     };
 
     if (!body.url || !body.method || !body.collection) return;
@@ -643,7 +648,9 @@
         <ul class="tabs">
           <li data-for="options">Mongo Options</li>
         </ul>
-        <section class="options">test</section>
+        <section class="options">
+          <textarea></textarea>
+        </section>
       </aside>
     `;
 
