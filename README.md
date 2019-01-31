@@ -42,8 +42,8 @@ to aid in development.
 ### v1.4.0
 
 * Added pagination (Issue #1)
-* Added options (Issue #4)
-* Added eval preview (Issue #3)
+* Added Mongo options (Issue #4)
+* Added preview of evaluated request to be sent to server (Issue #3)
 * Fixed textarea paste bug (Issue #2)
 
 ### v1.3.0
