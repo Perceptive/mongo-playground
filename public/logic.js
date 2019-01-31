@@ -367,14 +367,15 @@
    * Let user know if textarea code is malformed
    * @param {Event} event
    */
-  const checkTextareaForErrors = tabName => (event) => {
-    const error = document.querySelector(`#${tabName} .left .error`);
+  const checkTextareaForErrors = ({ target }) => {
+    const error = target.parentElement.parentElement
+      .querySelector('.error');
 
     try {
       // We are deliberately using eval here since it does all the heavy
       // lifting for us; why build a custom parser when there is one built-in?
       // eslint-disable-next-line no-eval
-      eval(event.target.value);
+      eval(target.value);
     } catch (e) {
       error.innerHTML = `<span class="error-circle">X</span>${e.message}`;
       return;
@@ -542,6 +543,7 @@
       collections: [],
       collection: '',
       data: '',
+      options: '',
       ...settings,
     };
 
@@ -649,8 +651,11 @@
           <li data-for="options">Mongo Options</li>
         </ul>
         <section class="options">
-          <textarea></textarea>
+          <textarea name="options" class="hideText" autocomplete="off"
+            autocorrect="off" autocapitalize="off" spellcheck="false">${tab.options}</textarea>
+          <pre class="textarea-highlight"></pre>
         </section>
+        <aside class="error"></aside>
       </aside>
     `;
 
@@ -663,17 +668,49 @@
     const urlInput = document.querySelector(`#${tabName} form [name="url"]`);
     const methodInput = document.querySelector(`#${tabName} form [name="method"]`);
     const collectionInput = document.querySelector(`#${tabName} form [name="collection"]`);
-    const textarea = document.querySelector(`#${tabName} textarea`);
+    const textareas = document.querySelectorAll(`#${tabName} textarea`);
     const submit = document.querySelector(`#${tabName} .execute`);
-    const prettySection = document.querySelector(`#${tabName} .textarea-highlight`);
     const options = document.querySelector(`#${tabName} .additional-options`);
 
     /**
-     * Web worker used for syntax highlighting
+     * Textarea helpers
      */
-    const worker = new Worker('worker.js');
-    worker.onmessage = (event) => { prettySection.innerHTML = event.data; };
-    worker.postMessage(textarea.value);
+    textareas.forEach((textarea) => {
+      const prettySection = textarea.parentElement.querySelector('.textarea-highlight');
+
+      /**
+       * Web worker used for syntax highlighting
+       */
+      const worker = new Worker('worker.js');
+      worker.onmessage = (event) => { prettySection.innerHTML = event.data; };
+      worker.postMessage(textarea.value);
+
+      // Keep persistent state
+      textarea.addEventListener('blur', keepState(tabName));
+
+      // Check textarea for eval errors
+      textarea.addEventListener('keyup', checkTextareaForErrors);
+
+      // Help with tabs, indenting, and spacing
+      textarea.addEventListener('keydown', helpUserWriteQuery);
+
+      // Handle syntax highlighting for textarea
+      textarea.addEventListener('keydown', highlightTextarea(textarea, prettySection, worker));
+      textarea.addEventListener('paste', (event) => {
+        // On paste, update syntax highlighting
+        highlightTextarea(textarea, prettySection, worker)(event);
+
+        // And synchronize scroll
+        prettySection.scrollTop = textarea.scrollTop;
+        prettySection.scrollLeft = textarea.scrollLeft;
+      });
+
+      // Synchronize scrolling between textarea and syntax highlighting section
+      textarea.addEventListener('scroll', (event) => {
+        prettySection.scrollTop = event.target.scrollTop;
+        prettySection.scrollLeft = event.target.scrollLeft;
+      });
+    });
 
     /**
      * Events
@@ -683,13 +720,6 @@
     urlInput.addEventListener('blur', keepState(tabName));
     methodInput.addEventListener('change', keepState(tabName));
     collectionInput.addEventListener('change', keepState(tabName));
-    textarea.addEventListener('blur', keepState(tabName));
-
-    // Check textarea for eval errors
-    textarea.addEventListener('keyup', checkTextareaForErrors(tabName));
-
-    // Help with tabs, indenting, and spacing
-    textarea.addEventListener('keydown', helpUserWriteQuery);
 
     // Handle form submission
     submit.addEventListener('click', submitForm(tabName));
@@ -697,27 +727,10 @@
     // Update collections when URL is changed
     urlInput.addEventListener('blur', queryCollections(tabName));
 
-    // Handle syntax highlighting for textarea
-    textarea.addEventListener('keydown', highlightTextarea(textarea, prettySection, worker));
-    textarea.addEventListener('paste', (event) => {
-      // On paste, update syntax highlighting
-      highlightTextarea(textarea, prettySection, worker)(event);
-
-      // And synchronize scroll
-      prettySection.scrollTop = textarea.scrollTop;
-      prettySection.scrollLeft = textarea.scrollLeft;
-    });
-
-    // Synchronize scrolling between textarea and syntax highlighting section
-    textarea.addEventListener('scroll', (event) => {
-      prettySection.scrollTop = event.target.scrollTop;
-      prettySection.scrollLeft = event.target.scrollLeft;
-    });
-
     // Enable additional options to open and close
     options.querySelectorAll('ul.tabs > li').forEach(li => li
       .addEventListener('click', () => {
-        const section = options.querySelector(`section.${li.dataset.for}`)
+        const section = options.querySelector(`section.${li.dataset.for}`);
         const open = section.classList.contains('active');
 
         // Remove active class from all sections

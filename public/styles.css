@@ -371,3 +371,10 @@ pre {
   height: 50vh;
   margin: 1vh 1vw;
 }
+.additional-options section:not(.active) > * {
+  height: 0;
+  padding: 0;
+}
+.additional-options .active .textarea-highlight {
+  height: auto;
+}
